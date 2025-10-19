@@ -40,6 +40,18 @@
 			</div>
 
 			<div class="detail-card">
+				<h3>Thông tin kho</h3>
+				<p>
+					<strong>Kho xuất:</strong> <span
+						th:text="${order.warehouse != null ? order.warehouse.name + ' (' + order.warehouse.code + ')' : '-'}"></span>
+				</p>
+				<p>
+					<strong>Kho đích:</strong> <span
+						th:text="${order.destinationWarehouse != null ? order.destinationWarehouse.name + ' (' + order.destinationWarehouse.code + ')' : '-'}"></span>
+				</p>
+			</div>
+
+			<div class="detail-card">
 				<h3>Người gửi</h3>
 				<p>
 					<strong>Tên:</strong> <span th:text="${order.senderName}"></span>

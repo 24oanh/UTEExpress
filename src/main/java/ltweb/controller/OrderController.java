@@ -4,6 +4,7 @@ import ltweb.entity.*;
 import ltweb.entity.Package;
 import ltweb.service.OrderService;
 import ltweb.service.ShipmentService;
+import ltweb.service.WarehouseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
@@ -22,6 +23,7 @@ public class OrderController {
 
 	private final OrderService orderService;
 	private final ShipmentService shipmentService;
+	private final WarehouseService warehouseService;
 
 	@GetMapping
 	public String listOrders(Model model, HttpSession session) {
@@ -43,24 +45,38 @@ public class OrderController {
 		return "warehouse/order-detail";
 	}
 
+	// Thêm vào class OrderController
+
 	@GetMapping("/create")
-	public String createOrderForm(Model model) {
-		model.addAttribute("order", new Order());
-		return "warehouse/order-form";
+	public String createOrderForm(Model model, HttpSession session) {
+	    Warehouse warehouse = (Warehouse) session.getAttribute("currentWarehouse");
+	    List<Warehouse> allWarehouses = warehouseService.getAllWarehouses();
+	    
+	    model.addAttribute("order", new Order());
+	    model.addAttribute("currentWarehouse", warehouse);
+	    model.addAttribute("allWarehouses", allWarehouses);
+	    return "warehouse/order-form";
 	}
 
 	@PostMapping("/create")
-	public String createOrder(@ModelAttribute Order order, HttpSession session, RedirectAttributes redirectAttributes) {
-		try {
-			Warehouse warehouse = (Warehouse) session.getAttribute("currentWarehouse");
-			order.setWarehouse(warehouse);
-			orderService.createOrder(order);
-			redirectAttributes.addFlashAttribute("success", "Order created successfully");
-			return "redirect:/warehouse/orders";
-		} catch (Exception e) {
-			redirectAttributes.addFlashAttribute("error", "Failed to create order: " + e.getMessage());
-			return "redirect:/warehouse/orders/create";
-		}
+	public String createOrder(@ModelAttribute Order order, 
+	                         @RequestParam Long destinationWarehouseId,
+	                         HttpSession session, 
+	                         RedirectAttributes redirectAttributes) {
+	    try {
+	        Warehouse warehouse = (Warehouse) session.getAttribute("currentWarehouse");
+	        Warehouse destinationWarehouse = warehouseService.getWarehouseById(destinationWarehouseId);
+	        
+	        order.setWarehouse(warehouse);
+	        order.setDestinationWarehouse(destinationWarehouse);
+	        orderService.createOrder(order);
+	        
+	        redirectAttributes.addFlashAttribute("success", "Order created successfully");
+	        return "redirect:/warehouse/orders";
+	    } catch (Exception e) {
+	        redirectAttributes.addFlashAttribute("error", "Failed to create order: " + e.getMessage());
+	        return "redirect:/warehouse/orders/create";
+	    }
 	}
 
 	@GetMapping("/{id}/edit")

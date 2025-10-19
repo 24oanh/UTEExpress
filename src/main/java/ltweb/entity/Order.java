@@ -54,6 +54,11 @@ public class Order {
     @JoinColumn(name = "warehouse_id")
     @JsonIgnoreProperties({"user"})  
     private Warehouse warehouse;
+    
+    @ManyToOne
+    @JoinColumn(name = "destination_warehouse_id")
+    @JsonIgnoreProperties({"user"})
+    private Warehouse destinationWarehouse;
 
     @ManyToOne
     @JoinColumn(name = "shipper_id")
