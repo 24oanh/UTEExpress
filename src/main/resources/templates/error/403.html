@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Access Denied</title>
+<link rel="stylesheet" th:href="@{/css/auth.css}">
+</head>
+<body>
+	<div class="error-container">
+		<h1>403</h1>
+		<h2>Access Denied</h2>
+		<p>Bạn không có quyền truy cập trang này</p>
+		<a th:href="@{/}" class="btn-primary">Về trang chủ</a>
+	</div>
+</body>
+</html>

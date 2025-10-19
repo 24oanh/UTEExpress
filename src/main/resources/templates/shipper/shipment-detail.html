@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Chi tiết giao hàng</title>
+<link rel="stylesheet" th:href="@{/css/shipper.css}">
+</head>
+<body>
+	<div th:replace="~{fragments/shipper-header :: header}"></div>
+	<div class="container">
+		<div class="page-header">
+			<h1>Chi tiết giao hàng</h1>
+			<a th:href="@{/shipper/shipments}" class="btn-secondary">Quay lại</a>
+		</div>
+		<div th:if="${success}" class="alert success" th:text="${success}"></div>
+		<div th:if="${error}" class="alert error" th:text="${error}"></div>
+
+		<div class="shipment-status-card">
+			<h2>
+				Mã giao hàng: <span th:text="${shipment.shipmentCode}"></span>
+			</h2>
+			<p class="status-large">
+				<span th:class="'badge badge-' + ${shipment.status} + ' badge-lg'"
+					th:text="${shipment.status}"></span>
+			</p>
+		</div>
+
+		<div class="detail-grid">
+			<div class="detail-card">
+				<h3>Thông tin đơn hàng</h3>
+				<p>
+					<strong>Mã đơn:</strong> <span
+						th:text="${shipment.order.orderCode}"></span>
+				</p>
+				<p>
+					<strong>Người gửi:</strong> <span
+						th:text="${shipment.order.senderName}"></span>
+				</p>
+				<p>
+					<strong>Người nhận:</strong> <span
+						th:text="${shipment.order.recipientName}"></span>
+				</p>
+				<p>
+					<strong>SĐT nhận:</strong> <a
+						th:href="'tel:' + ${shipment.order.recipientPhone}"
+						th:text="${shipment.order.recipientPhone}"></a>
+				</p>
+				<p>
+					<strong>Địa chỉ:</strong> <span
+						th:text="${shipment.order.recipientAddress}"></span>
+				</p>
+			</div>
+
+			<div class="detail-card">
+				<h3>Thông tin giao hàng</h3>
+				<p th:if="${shipment.pickupTime}">
+					<strong>Lấy hàng:</strong> <span
+						th:text="${#temporals.format(shipment.pickupTime, 'dd/MM/yyyy HH:mm')}"></span>
+				</p>
+				<p th:if="${shipment.deliveryTime}">
+					<strong>Giao hàng:</strong> <span
+						th:text="${#temporals.format(shipment.deliveryTime, 'dd/MM/yyyy HH:mm')}"></span>
+				</p>
+				<p th:if="${shipment.notes}">
+					<strong>Ghi chú:</strong> <span th:text="${shipment.notes}"></span>
+				</p>
+				<p th:if="${shipment.proofImageUrl}">
+					<strong>Ảnh chứng từ:</strong><br> <img
+						th:src="${shipment.proofImageUrl}" alt="Proof"
+						style="max-width: 300px; margin-top: 10px; border-radius: 8px;">
+				</p>
+			</div>
+		</div>
+
+		<div class="action-section"
+			th:if="${shipment.status == T(ltweb.entity.ShipmentStatus).PENDING}">
+			<h3>Bắt đầu giao hàng</h3>
+			<form th:action="@{/shipper/shipments/{id}/start(id=${shipment.id})}"
+				method="post">
+				<button type="submit" class="btn-primary btn-lg">Bắt đầu
+					giao</button>
+			</form>
+		</div>
+
+		<div class="action-section"
+			th:if="${shipment.status == T(ltweb.entity.ShipmentStatus).IN_TRANSIT}">
+			<h3>Hoàn thành giao hàng</h3>
+			<form
+				th:action="@{/shipper/shipments/{id}/complete(id=${shipment.id})}"
+				method="post" enctype="multipart/form-data" class="action-form">
+				<div class="form-group">
+					<label>Ảnh chứng từ giao hàng</label> <input type="file"
+						name="proofImage" accept="image/*" capture="camera">
+				</div>
+				<div class="form-group">
+					<label>Ghi chú</label>
+					<textarea name="notes" rows="3"
+						placeholder="Ghi chú về việc giao hàng..."></textarea>
+				</div>
+				<button type="submit" class="btn-success btn-lg">Hoàn thành</button>
+			</form>
+
+			<h3 class="mt-4">Giao hàng thất bại</h3>
+			<form th:action="@{/shipper/shipments/{id}/fail(id=${shipment.id})}"
+				method="post" class="action-form">
+				<div class="form-group">
+					<label>Lý do thất bại *</label>
+					<textarea name="notes" rows="3" required
+						placeholder="Mô tả lý do không giao được hàng..."></textarea>
+				</div>
+				<button type="submit" class="btn-danger btn-lg"
+					onclick="return confirm('Xác nhận giao hàng thất bại?')">Đánh
+					dấu thất bại</button>
+			</form>
+		</div>
+
+		<div class="section"
+			th:if="${shipment.status == T(ltweb.entity.ShipmentStatus).IN_TRANSIT}">
+			<h3>Cập nhật vị trí</h3>
+			<button onclick="updateLocation()" class="btn-primary">Cập
+				nhật vị trí hiện tại</button>
+			<div id="location-status" class="mt-2"></div>
+		</div>
+	</div>
+	<script th:inline="javascript">
+        const shipmentId = /*[[${shipment.id}]]*/ 0;
+        
+        function updateLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const data = new FormData();
+                    data.append('latitude', position.coords.latitude);
+                    data.append('longitude', position.coords.longitude);
+                    
+                    fetch('/shipper/location/update', {
+                        method: 'POST',
+                        body: data
+                    })
+                    .then(response => response.text())
+                    .then(result => {
+                        document.getElementById('location-status').innerHTML = 
+                            '<span class="text-success">✓ Đã cập nhật vị trí</span>';
+                    })
+                    .catch(error => {
+                        document.getElementById('location-status').innerHTML = 
+                            '<span class="text-danger">✗ Lỗi cập nhật</span>';
+                    });
+                }, function(error) {
+                    alert('Không thể lấy vị trí: ' + error.message);
+                });
+            } else {
+                alert('Trình duyệt không hỗ trợ định vị');
+            }
+        }
+    </script>
+</body>
+</html>

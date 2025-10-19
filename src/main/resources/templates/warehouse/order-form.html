@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Tạo/Sửa đơn hàng</title>
+    <link rel="stylesheet" th:href="@{/css/warehouse.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/warehouse-header :: header}"></div>
+    <div class="container">
+        <h1 th:text="${order.id != null ? 'Sửa đơn hàng' : 'Tạo đơn hàng mới'}"></h1>
+        <form th:action="${order.id != null ? '/warehouse/orders/' + order.id + '/update' : '/warehouse/orders/create'}" 
+              th:object="${order}" method="post" class="form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Mã đơn hàng *</label>
+                    <input type="text" th:field="*{orderCode}" required>
+                </div>
+                <div class="form-group">
+                    <label>Phí vận chuyển *</label>
+                    <input type="number" th:field="*{shipmentFee}" step="1000" required>
+                </div>
+            </div>
+            
+            <h3>Thông tin người gửi</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Tên người gửi *</label>
+                    <input type="text" th:field="*{senderName}" required>
+                </div>
+                <div class="form-group">
+                    <label>Số điện thoại *</label>
+                    <input type="tel" th:field="*{senderPhone}" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Địa chỉ người gửi *</label>
+                <textarea th:field="*{senderAddress}" rows="2" required></textarea>
+            </div>
+            
+            <h3>Thông tin người nhận</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Tên người nhận *</label>
+                    <input type="text" th:field="*{recipientName}" required>
+                </div>
+                <div class="form-group">
+                    <label>Số điện thoại *</label>
+                    <input type="tel" th:field="*{recipientPhone}" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Địa chỉ người nhận *</label>
+                <textarea th:field="*{recipientAddress}" rows="2" required></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>Ghi chú</label>
+                <textarea th:field="*{notes}" rows="3"></textarea>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Lưu</button>
+                <a th:href="@{/warehouse/orders}" class="btn-secondary">Hủy</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
