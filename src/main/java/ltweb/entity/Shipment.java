@@ -23,7 +23,7 @@ public class Shipment {
     private Order order;
 
     @ManyToOne
-    @JoinColumn(name = "shipper_id", nullable = false)
+    @JoinColumn(name = "shipper_id", nullable = true)
     private Shipper shipper;
 
     @Column(name = "pickup_time")
@@ -48,6 +48,7 @@ public class Shipment {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();

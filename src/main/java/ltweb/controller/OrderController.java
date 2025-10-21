@@ -5,6 +5,7 @@ import ltweb.entity.Package;
 import ltweb.service.OrderService;
 import ltweb.service.ShipmentService;
 import ltweb.service.WarehouseService;
+import ltweb.repository.ShipmentLegRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
@@ -24,6 +25,7 @@ public class OrderController {
 	private final OrderService orderService;
 	private final ShipmentService shipmentService;
 	private final WarehouseService warehouseService;
+	private final ShipmentLegRepository shipmentLegRepository;
 
 	@GetMapping
 	public String listOrders(Model model, HttpSession session) {
@@ -39,44 +41,46 @@ public class OrderController {
 		List<Package> packages = orderService.getPackagesByOrderId(id);
 		List<Shipper> availableShippers = shipmentService.getActiveShippers();
 
+		Shipment shipment = shipmentService.getShipmentByOrderId(id);
+		if (shipment != null) {
+			List<ShipmentLeg> legs = shipmentLegRepository.findByShipmentIdOrderByLegSequence(shipment.getId());
+			model.addAttribute("shipmentLegs", legs);
+		}
+
 		model.addAttribute("order", order);
 		model.addAttribute("packages", packages);
 		model.addAttribute("availableShippers", availableShippers);
 		return "warehouse/order-detail";
 	}
 
-	// Thêm vào class OrderController
-
 	@GetMapping("/create")
 	public String createOrderForm(Model model, HttpSession session) {
-	    Warehouse warehouse = (Warehouse) session.getAttribute("currentWarehouse");
-	    List<Warehouse> allWarehouses = warehouseService.getAllWarehouses();
-	    
-	    model.addAttribute("order", new Order());
-	    model.addAttribute("currentWarehouse", warehouse);
-	    model.addAttribute("allWarehouses", allWarehouses);
-	    return "warehouse/order-form";
+		Warehouse warehouse = (Warehouse) session.getAttribute("currentWarehouse");
+		List<Warehouse> allWarehouses = warehouseService.getAllWarehouses();
+
+		model.addAttribute("order", new Order());
+		model.addAttribute("currentWarehouse", warehouse);
+		model.addAttribute("allWarehouses", allWarehouses);
+		return "warehouse/order-form";
 	}
 
 	@PostMapping("/create")
-	public String createOrder(@ModelAttribute Order order, 
-	                         @RequestParam Long destinationWarehouseId,
-	                         HttpSession session, 
-	                         RedirectAttributes redirectAttributes) {
-	    try {
-	        Warehouse warehouse = (Warehouse) session.getAttribute("currentWarehouse");
-	        Warehouse destinationWarehouse = warehouseService.getWarehouseById(destinationWarehouseId);
-	        
-	        order.setWarehouse(warehouse);
-	        order.setDestinationWarehouse(destinationWarehouse);
-	        orderService.createOrder(order);
-	        
-	        redirectAttributes.addFlashAttribute("success", "Order created successfully");
-	        return "redirect:/warehouse/orders";
-	    } catch (Exception e) {
-	        redirectAttributes.addFlashAttribute("error", "Failed to create order: " + e.getMessage());
-	        return "redirect:/warehouse/orders/create";
-	    }
+	public String createOrder(@ModelAttribute Order order, @RequestParam Long destinationWarehouseId,
+			HttpSession session, RedirectAttributes redirectAttributes) {
+		try {
+			Warehouse warehouse = (Warehouse) session.getAttribute("currentWarehouse");
+			Warehouse destinationWarehouse = warehouseService.getWarehouseById(destinationWarehouseId);
+
+			order.setWarehouse(warehouse);
+			order.setDestinationWarehouse(destinationWarehouse);
+			orderService.createOrder(order);
+
+			redirectAttributes.addFlashAttribute("success", "Order created successfully with route legs");
+			return "redirect:/warehouse/orders";
+		} catch (Exception e) {
+			redirectAttributes.addFlashAttribute("error", "Failed to create order: " + e.getMessage());
+			return "redirect:/warehouse/orders/create";
+		}
 	}
 
 	@GetMapping("/{id}/edit")
@@ -102,15 +106,8 @@ public class OrderController {
 	public String assignShipper(@PathVariable Long id, @RequestParam Long shipperId,
 			RedirectAttributes redirectAttributes) {
 		try {
-			Order order = orderService.assignOrderToShipper(id, shipperId);
-
-			// Tạo shipment tự động
-			Shipper shipper = shipmentService.getShipperById(shipperId);
-			Shipment shipment = Shipment.builder().shipmentCode("SH" + System.currentTimeMillis()).order(order)
-					.shipper(shipper).status(ShipmentStatus.PENDING).build();
-			shipmentService.createShipment(shipment);
-
-			redirectAttributes.addFlashAttribute("success", "Shipper assigned successfully");
+			orderService.assignOrderToShipper(id, shipperId);
+			redirectAttributes.addFlashAttribute("success", "Shipper assigned and route updated successfully");
 		} catch (Exception e) {
 			redirectAttributes.addFlashAttribute("error", "Failed to assign shipper: " + e.getMessage());
 		}

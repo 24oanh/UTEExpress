@@ -18,6 +18,86 @@ public class OrderService {
 	private final PackageRepository packageRepository;
 	private final ShipperRepository shipperRepository;
 	private final NotificationService notificationService;
+	private final ShipmentRepository shipmentRepository;
+	private final ShipmentLegService shipmentLegService;
+	private final ShipmentLegRepository shipmentLegRepository;
+
+	@Transactional
+	public Order createOrder(Order order) {
+		Order savedOrder = orderRepository.save(order);
+
+		if (savedOrder.getWarehouse() != null) {
+			notificationService.createNotification("WAREHOUSE", savedOrder.getWarehouse().getId(),
+					"New order created: " + savedOrder.getOrderCode(), NotificationType.ORDER_CREATED, savedOrder);
+		}
+
+		if (savedOrder.getWarehouse() != null && savedOrder.getDestinationWarehouse() != null) {
+			createShipmentWithLegs(savedOrder);
+		}
+
+		return savedOrder;
+	}
+
+	private void createShipmentWithLegs(Order order) {
+		RouteCalculationService.RouteSegment firstSegment = shipmentLegService.getFirstLegPreferredShipper(order);
+
+		Shipper defaultShipper = null;
+		if (firstSegment != null && firstSegment.getPreferredShipper() != null) {
+			defaultShipper = firstSegment.getPreferredShipper();
+		}
+
+		Shipment shipment = Shipment.builder().shipmentCode("SH" + System.currentTimeMillis()).order(order)
+				.shipper(defaultShipper).status(ShipmentStatus.PENDING).build();
+
+		shipment = shipmentRepository.save(shipment);
+
+		shipmentLegService.createShipmentLegs(shipment, order);
+
+		if (defaultShipper != null) {
+			order.setShipper(defaultShipper);
+			orderRepository.save(order);
+
+			notificationService.createNotification("SHIPPER", defaultShipper.getId(),
+					"New order assigned: " + order.getOrderCode(), NotificationType.ORDER_ASSIGNED, order);
+		}
+	}
+
+	@Transactional
+	public Order assignOrderToShipper(Long orderId, Long shipperId) {
+		Order order = getOrderById(orderId);
+		Shipper shipper = shipperRepository.findById(shipperId)
+				.orElseThrow(() -> new RuntimeException("Shipper not found"));
+
+		order.setShipper(shipper);
+		order.setStatus(OrderStatus.CHO_GIAO);
+		Order savedOrder = orderRepository.save(order);
+
+		Shipment shipment = shipmentRepository.findByOrderId(orderId).orElse(null);
+		if (shipment != null) {
+			shipment.setShipper(shipper);
+			shipmentRepository.save(shipment);
+
+			ShipmentLeg firstLeg = shipmentLegRepository
+					.findFirstByShipmentIdAndStatusOrderByLegOrder(shipment.getId(), ShipmentStatus.PENDING)
+					.orElse(null);
+
+			if (firstLeg != null) {
+				firstLeg.setShipper(shipper);
+				shipmentLegRepository.save(firstLeg);
+			}
+		}
+
+		notificationService.createNotification("SHIPPER", shipperId, "New order assigned: " + order.getOrderCode(),
+				NotificationType.ORDER_ASSIGNED, savedOrder);
+
+		if (order.getWarehouse() != null) {
+			notificationService.createNotification("WAREHOUSE", order.getWarehouse().getId(),
+					"Order " + order.getOrderCode() + " assigned to " + shipper.getName(),
+					NotificationType.ORDER_ASSIGNED, savedOrder);
+		}
+
+		return savedOrder;
+	}
 
 	public List<Order> getAllOrders() {
 		return orderRepository.findAll();
@@ -53,18 +133,6 @@ public class OrderService {
 	}
 
 	@Transactional
-	public Order createOrder(Order order) {
-		Order savedOrder = orderRepository.save(order);
-
-		if (savedOrder.getWarehouse() != null) {
-			notificationService.createNotification("WAREHOUSE", savedOrder.getWarehouse().getId(),
-					"New order created: " + savedOrder.getOrderCode(), NotificationType.ORDER_CREATED, savedOrder);
-		}
-
-		return savedOrder;
-	}
-
-	@Transactional
 	public Order updateOrder(Long id, Order orderDetails) {
 		Order order = getOrderById(id);
 		order.setSenderName(orderDetails.getSenderName());
@@ -76,30 +144,6 @@ public class OrderService {
 		order.setShipmentFee(orderDetails.getShipmentFee());
 		order.setNotes(orderDetails.getNotes());
 		return orderRepository.save(order);
-	}
-
-	@Transactional
-	public Order assignOrderToShipper(Long orderId, Long shipperId) {
-		Order order = getOrderById(orderId);
-		Shipper shipper = shipperRepository.findById(shipperId)
-				.orElseThrow(() -> new RuntimeException("Shipper not found"));
-
-		order.setShipper(shipper);
-		order.setStatus(OrderStatus.CHO_GIAO);
-		Order savedOrder = orderRepository.save(order);
-
-		// Gửi thông báo cho shipper
-		notificationService.createNotification("SHIPPER", shipperId, "New order assigned: " + order.getOrderCode(),
-				NotificationType.ORDER_ASSIGNED, savedOrder);
-
-		// Gửi thông báo cho warehouse
-		if (order.getWarehouse() != null) {
-			notificationService.createNotification("WAREHOUSE", order.getWarehouse().getId(),
-					"Order " + order.getOrderCode() + " assigned to " + shipper.getName(),
-					NotificationType.ORDER_ASSIGNED, savedOrder);
-		}
-
-		return savedOrder;
 	}
 
 	@Transactional
