@@ -1,7 +1,6 @@
 package ltweb.service;
 
 import ltweb.entity.*;
-import ltweb.entity.Package;
 import ltweb.repository.*;
 import lombok.RequiredArgsConstructor;
 
@@ -18,9 +17,11 @@ public class ShipmentService {
 	private final ShipmentRepository shipmentRepository;
 	private final ShipperRepository shipperRepository;
 	private final OrderRepository orderRepository;
-	private final PackageRepository packageRepository;
 	private final NotificationService notificationService;
 	private final TrackingService trackingService;
+	private final ShipmentLegService shipmentLegService;
+	private final ShipmentLegRepository shipmentLegRepository;
+
 
 	public List<Shipment> getAllShipments() {
 		return shipmentRepository.findAll();
@@ -87,6 +88,15 @@ public class ShipmentService {
 			order.setStatus(OrderStatus.DANG_GIAO);
 			orderRepository.save(order);
 
+			ShipmentLeg firstLeg = shipmentLegRepository
+					.findFirstByShipmentIdAndStatusOrderByLegSequence(id, ShipmentStatus.PENDING)
+					.orElse(null);
+			if (firstLeg != null) {
+				firstLeg.setStatus(ShipmentStatus.IN_TRANSIT);
+				firstLeg.setPickupTime(LocalDateTime.now());
+				shipmentLegRepository.save(firstLeg);
+			}
+
 			trackingService.createTracking(shipment, 0.0, 0.0, "Shipment picked up and in transit",
 					TrackingStatus.IN_PROGRESS);
 
@@ -108,19 +118,7 @@ public class ShipmentService {
 		} else if (status == ShipmentStatus.DELIVERED) {
 			shipment.setDeliveryTime(LocalDateTime.now());
 
-			Order order = shipment.getOrder();
-			order.setStatus(OrderStatus.HOAN_THANH);
-			orderRepository.save(order);
-
-			List<Package> packages = packageRepository.findByOrderId(order.getId());
-			for (Package pkg : packages) {
-				pkg.setStatus(PackageStatus.DA_GIAO);
-				packageRepository.save(pkg);
-			}
-
-			trackingService.createTracking(shipment, 0.0, 0.0, "Shipment delivered successfully",
-					TrackingStatus.COMPLETED);
-
+			shipmentLegService.completeCurrentLegAndStartNext(id);
 			updateShipperStatistics(shipment.getShipper().getId(), true);
 
 			if (shipment.getOrder().getWarehouse() != null) {
@@ -138,12 +136,7 @@ public class ShipmentService {
 			}
 
 		} else if (status == ShipmentStatus.FAILED) {
-			Order order = shipment.getOrder();
-			order.setStatus(OrderStatus.THAT_BAI);
-			orderRepository.save(order);
-
-			trackingService.createTracking(shipment, 0.0, 0.0, "Shipment delivery failed", TrackingStatus.COMPLETED);
-
+			shipmentLegService.failCurrentLeg(id, shipment.getNotes());
 			updateShipperStatistics(shipment.getShipper().getId(), false);
 
 			if (shipment.getOrder().getWarehouse() != null) {

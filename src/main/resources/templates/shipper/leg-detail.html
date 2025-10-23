@@ -1,0 +1,82 @@
+<!-- shipper/leg-detail.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Chi tiết chặng</title>
+    <link rel="stylesheet" th:href="@{/css/shipper.css}">
+</head>
+
+<body>
+    <div th:replace="~{fragments/shipper-header :: header}"></div>
+    <div class="container">
+        <div class="page-header">
+            <h1>Chi tiết chặng giao hàng</h1>
+            <a th:href="@{/shipper/shipments/legs}" class="btn-secondary">Quay lại</a>
+        </div>
+
+        <div th:if="${success}" class="alert success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert error" th:text="${error}"></div>
+
+        <div class="detail-grid">
+            <div class="detail-card">
+                <h3>Thông tin chặng</h3>
+                <p><strong>Đơn hàng:</strong> <span th:text="${leg.order.orderCode}"></span></p>
+                <p><strong>Chặng:</strong> <span th:text="${leg.legSequence}"></span></p>
+                <p><strong>Từ:</strong> <span th:text="${leg.fromWarehouse.name}"></span></p>
+                <p><strong>Đến:</strong> <span
+                        th:text="${leg.toWarehouse != null ? leg.toWarehouse.name : 'Khách hàng'}"></span></p>
+                <p><strong>Khoảng cách:</strong> <span th:text="${leg.distanceKm} + ' km'"></span></p>
+                <p><strong>Thời gian dự kiến:</strong> <span th:text="${leg.estimatedHours} + ' giờ'"></span></p>
+                <p><strong>Loại chặng:</strong>
+                    <span th:class="${leg.isFinalLeg ? 'badge badge-success' : 'badge badge-secondary'}"
+                        th:text="${leg.isFinalLeg ? 'Giao khách hàng' : 'Chuyển kho'}"></span>
+                </p>
+                <p><strong>Trạng thái:</strong>
+                    <span th:class="'badge badge-' + ${leg.status}" th:text="${leg.status}"></span>
+                </p>
+            </div>
+
+            <div class="detail-card" th:if="${leg.isFinalLeg}">
+                <h3>Thông tin người nhận</h3>
+                <p><strong>Tên:</strong> <span th:text="${leg.order.recipientName}"></span></p>
+                <p><strong>SĐT:</strong> <a th:href="'tel:' + ${leg.order.recipientPhone}"
+                        th:text="${leg.order.recipientPhone}"></a></p>
+                <p><strong>Địa chỉ:</strong> <span th:text="${leg.order.recipientAddress}"></span></p>
+            </div>
+
+            <div class="detail-card" th:if="${!leg.isFinalLeg}">
+                <h3>Thông tin kho đích</h3>
+                <p><strong>Tên kho:</strong> <span th:text="${leg.toWarehouse.name}"></span></p>
+                <p><strong>Địa chỉ:</strong> <span th:text="${leg.toWarehouse.address}"></span></p>
+                <p><strong>SĐT:</strong> <span th:text="${leg.toWarehouse.phone}"></span></p>
+            </div>
+        </div>
+
+        <div class="action-section" th:if="${leg.status == T(ltweb.entity.ShipmentStatus).PENDING}">
+            <h3>Bắt đầu chặng</h3>
+            <form th:action="@{/shipper/shipments/legs/{id}/start(id=${leg.id})}" method="post">
+                <button type="submit" class="btn-primary btn-lg">Bắt đầu giao</button>
+            </form>
+        </div>
+
+        <div class="action-section" th:if="${leg.status == T(ltweb.entity.ShipmentStatus).IN_TRANSIT}">
+            <h3>Hoàn thành chặng</h3>
+            <form th:action="@{/shipper/shipments/legs/{id}/complete(id=${leg.id})}" method="post"
+                enctype="multipart/form-data" class="action-form">
+                <div class="form-group">
+                    <label>Ảnh chứng từ</label>
+                    <input type="file" name="proofImage" accept="image/*" capture="camera">
+                </div>
+                <div class="form-group">
+                    <label>Ghi chú</label>
+                    <textarea name="notes" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn-success btn-lg">Hoàn thành chặng</button>
+            </form>
+        </div>
+    </div>
+</body>
+
+</html>

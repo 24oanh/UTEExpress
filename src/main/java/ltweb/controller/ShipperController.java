@@ -2,8 +2,10 @@ package ltweb.controller;
 
 import ltweb.entity.*;
 import ltweb.entity.Package;
+import ltweb.repository.ShipmentLegRepository;
 import ltweb.service.AuthService;
 import ltweb.service.OrderService;
+import ltweb.service.ShipmentLegService;
 import ltweb.service.ShipmentService;
 import ltweb.service.CloudinaryService;
 import ltweb.service.NotificationService;
@@ -17,6 +19,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpSession;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Controller
@@ -30,6 +34,8 @@ public class ShipperController {
 	private final AuthService authService;
 	private final CloudinaryService cloudinaryService;
 	private final NotificationService notificationService;
+	private final ShipmentLegRepository shipmentLegRepository;
+	private final ShipmentLegService shipmentLegService;
 
 	@GetMapping("/dashboard")
 	public String dashboard(Model model, Authentication auth, HttpSession session) {
@@ -105,6 +111,75 @@ public class ShipperController {
 		return "redirect:/shipper/shipments/" + id;
 	}
 
+	// ShipperController.java - Thêm method mới
+	@GetMapping("/shipments/legs")
+	public String listLegs(Model model, HttpSession session) {
+		Shipper shipper = (Shipper) session.getAttribute("currentShipper");
+		List<ShipmentLeg> pendingLegs = shipmentLegRepository
+				.findByShipperIdAndStatus(shipper.getId(), ShipmentStatus.PENDING);
+		List<ShipmentLeg> inTransitLegs = shipmentLegRepository
+				.findByShipperIdAndStatus(shipper.getId(), ShipmentStatus.IN_TRANSIT);
+
+		model.addAttribute("pendingLegs", pendingLegs);
+		model.addAttribute("inTransitLegs", inTransitLegs);
+		return "shipper/legs";
+	}
+
+	@GetMapping("/shipments/legs/{id}")
+	public String legDetail(@PathVariable Long id, Model model) {
+		ShipmentLeg leg = shipmentLegRepository.findById(id)
+				.orElseThrow(() -> new RuntimeException("Leg not found"));
+		model.addAttribute("leg", leg);
+		return "shipper/leg-detail";
+	}
+
+	@PostMapping("/shipments/legs/{id}/start")
+	public String startLeg(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+		try {
+			ShipmentLeg leg = shipmentLegRepository.findById(id)
+					.orElseThrow(() -> new RuntimeException("Leg not found"));
+			leg.setStatus(ShipmentStatus.IN_TRANSIT);
+			leg.setPickupTime(LocalDateTime.now());
+			shipmentLegRepository.save(leg);
+
+			redirectAttributes.addFlashAttribute("success", "Đã bắt đầu chặng giao hàng");
+		} catch (Exception e) {
+			redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+		}
+		return "redirect:/shipper/shipments/legs/" + id;
+	}
+
+	@PostMapping("/shipments/legs/{id}/complete")
+	public String completeLeg(@PathVariable Long id,
+			@RequestParam(required = false) MultipartFile proofImage,
+			@RequestParam(required = false) String notes,
+			RedirectAttributes redirectAttributes,
+			HttpSession session) {
+		try {
+			ShipmentLeg leg = shipmentLegRepository.findById(id)
+					.orElseThrow(() -> new RuntimeException("Leg not found"));
+
+			if (proofImage != null && !proofImage.isEmpty()) {
+				String imageUrl = cloudinaryService.uploadProofImage(proofImage,
+						leg.getShipment().getShipmentCode() + "-leg" + leg.getLegSequence());
+				leg.setNotes((leg.getNotes() != null ? leg.getNotes() + "\n" : "") +
+						"Ảnh: " + imageUrl);
+			}
+
+			if (notes != null && !notes.isEmpty()) {
+				leg.setNotes((leg.getNotes() != null ? leg.getNotes() + "\n" : "") + notes);
+			}
+
+			shipmentLegRepository.save(leg);
+			shipmentLegService.completeCurrentLegAndStartNext(leg.getShipment().getId());
+
+			redirectAttributes.addFlashAttribute("success", "Hoàn thành chặng giao hàng");
+		} catch (Exception e) {
+			redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+		}
+		return "redirect:/shipper/shipments/legs";
+	}
+
 	@PostMapping("/shipments/{id}/complete")
 	public String completeShipment(@PathVariable Long id, @RequestParam(required = false) MultipartFile proofImage,
 			@RequestParam(required = false) String notes, RedirectAttributes redirectAttributes) {
@@ -122,9 +197,9 @@ public class ShipperController {
 			}
 
 			shipmentService.updateShipmentStatus(id, ShipmentStatus.DELIVERED);
-			redirectAttributes.addFlashAttribute("success", "Shipment completed successfully");
+			redirectAttributes.addFlashAttribute("success", "Hoàn thành chặng giao hàng");
 		} catch (Exception e) {
-			redirectAttributes.addFlashAttribute("error", "Failed to complete shipment: " + e.getMessage());
+			redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
 		}
 		return "redirect:/shipper/shipments/" + id;
 	}

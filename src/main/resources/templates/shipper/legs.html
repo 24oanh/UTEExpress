@@ -1,0 +1,74 @@
+<!-- shipper/legs.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Chặng giao hàng</title>
+    <link rel="stylesheet" th:href="@{/css/shipper.css}">
+</head>
+
+<body>
+    <div th:replace="~{fragments/shipper-header :: header}"></div>
+    <div class="container">
+        <h1>Chặng giao hàng của tôi</h1>
+
+        <div class="section">
+            <h2>Chặng chờ lấy hàng</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Mã đơn</th>
+                        <th>Chặng</th>
+                        <th>Từ</th>
+                        <th>Đến</th>
+                        <th>Khoảng cách</th>
+                        <th>Loại</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="leg : ${pendingLegs}">
+                        <td th:text="${leg.order.orderCode}"></td>
+                        <td th:text="${leg.legSequence}"></td>
+                        <td th:text="${leg.fromWarehouse.name}"></td>
+                        <td th:text="${leg.toWarehouse != null ? leg.toWarehouse.name : 'Khách hàng'}"></td>
+                        <td th:text="${leg.distanceKm} + ' km'"></td>
+                        <td><span th:class="${leg.isFinalLeg ? 'badge badge-success' : 'badge badge-secondary'}"
+                                th:text="${leg.isFinalLeg ? 'Giao khách' : 'Chuyển kho'}"></span></td>
+                        <td><a th:href="@{/shipper/shipments/legs/{id}(id=${leg.id})}" class="btn-sm">Chi tiết</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>Chặng đang giao</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Mã đơn</th>
+                        <th>Chặng</th>
+                        <th>Từ</th>
+                        <th>Đến</th>
+                        <th>Loại</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="leg : ${inTransitLegs}">
+                        <td th:text="${leg.order.orderCode}"></td>
+                        <td th:text="${leg.legSequence}"></td>
+                        <td th:text="${leg.fromWarehouse.name}"></td>
+                        <td th:text="${leg.toWarehouse != null ? leg.toWarehouse.name : 'Khách hàng'}"></td>
+                        <td><span th:class="${leg.isFinalLeg ? 'badge badge-success' : 'badge badge-secondary'}"
+                                th:text="${leg.isFinalLeg ? 'Giao khách' : 'Chuyển kho'}"></span></td>
+                        <td><a th:href="@{/shipper/shipments/legs/{id}(id=${leg.id})}" class="btn-sm">Chi tiết</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+
+</html>

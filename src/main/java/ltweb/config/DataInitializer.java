@@ -24,7 +24,7 @@ public class DataInitializer implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) {
-		
+
 		// Create roles
 		Role warehouseRole = roleRepository.save(Role.builder().name(RoleType.ROLE_WAREHOUSE_STAFF).build());
 		Role shipperRole = roleRepository.save(Role.builder().name(RoleType.ROLE_SHIPPER).build());
@@ -95,24 +95,48 @@ public class DataInitializer implements CommandLineRunner {
 		shipperHCM = shipperRepository.save(shipperHCM);
 
 		// ========== ROUTES ==========
-		routeRepository.save(Route.builder().fromWarehouse(warehouseHN).toWarehouse(warehouseDN)
-				.preferredShipper(shipperHN).distanceKm(764.0).estimatedHours(12.0).isActive(true).build());
+		// HN -> DN (trực tiếp)
+		routeRepository.save(Route.builder()
+				.fromWarehouse(warehouseHN)
+				.toWarehouse(warehouseDN)
+				.preferredShipper(shipperHN)
+				.distanceKm(764.0)
+				.estimatedHours(12.0)
+				.isActive(true)
+				.build());
 
-		routeRepository.save(Route.builder().fromWarehouse(warehouseHN).toWarehouse(warehouseHCM)
-				.preferredShipper(shipperHN).distanceKm(1720.0).estimatedHours(24.0).isActive(true).build());
+		// DN -> HN (trực tiếp)
+		routeRepository.save(Route.builder()
+				.fromWarehouse(warehouseDN)
+				.toWarehouse(warehouseHN)
+				.preferredShipper(shipperDN)
+				.distanceKm(764.0)
+				.estimatedHours(12.0)
+				.isActive(true)
+				.build());
 
-		routeRepository.save(Route.builder().fromWarehouse(warehouseDN).toWarehouse(warehouseHN)
-				.preferredShipper(shipperDN).distanceKm(764.0).estimatedHours(12.0).isActive(true).build());
+		// HCM -> DN (trực tiếp)
+		routeRepository.save(Route.builder()
+				.fromWarehouse(warehouseHCM)
+				.toWarehouse(warehouseDN)
+				.preferredShipper(shipperHCM)
+				.distanceKm(964.0)
+				.estimatedHours(14.0)
+				.isActive(true)
+				.build());
 
-		routeRepository.save(Route.builder().fromWarehouse(warehouseDN).toWarehouse(warehouseHCM)
-				.preferredShipper(shipperDN).distanceKm(964.0).estimatedHours(14.0).isActive(true).build());
+		// DN -> HCM (trực tiếp)
+		routeRepository.save(Route.builder()
+				.fromWarehouse(warehouseDN)
+				.toWarehouse(warehouseHCM)
+				.preferredShipper(shipperDN)
+				.distanceKm(964.0)
+				.estimatedHours(14.0)
+				.isActive(true)
+				.build());
 
-		routeRepository.save(Route.builder().fromWarehouse(warehouseHCM).toWarehouse(warehouseHN)
-				.preferredShipper(shipperHCM).distanceKm(1720.0).estimatedHours(24.0).isActive(true).build());
-
-		routeRepository.save(Route.builder().fromWarehouse(warehouseHCM).toWarehouse(warehouseDN)
-				.preferredShipper(shipperHCM).distanceKm(964.0).estimatedHours(14.0).isActive(true).build());
-
+		// KHÔNG có route trực tiếp HN <-> HCM
+		// Phải qua DN (được xử lý trong RouteCalculationService)
 		System.out.println("=== Initial Data Created ===");
 		System.out.println("Warehouses: warehouse_hn, warehouse_dn, warehouse_hcm (password: 123456)");
 		System.out.println("Shippers: shipper_hn, shipper_dn, shipper_hcm (password: 123456)");

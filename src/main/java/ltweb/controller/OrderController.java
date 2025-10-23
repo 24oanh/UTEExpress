@@ -3,6 +3,7 @@ package ltweb.controller;
 import ltweb.entity.*;
 import ltweb.entity.Package;
 import ltweb.service.OrderService;
+import ltweb.service.ShipmentLegService;
 import ltweb.service.ShipmentService;
 import ltweb.service.WarehouseService;
 import ltweb.repository.ShipmentLegRepository;
@@ -26,6 +27,7 @@ public class OrderController {
 	private final ShipmentService shipmentService;
 	private final WarehouseService warehouseService;
 	private final ShipmentLegRepository shipmentLegRepository;
+	private final ShipmentLegService shipmentLegService;
 
 	@GetMapping
 	public String listOrders(Model model, HttpSession session) {
@@ -112,6 +114,19 @@ public class OrderController {
 			redirectAttributes.addFlashAttribute("error", "Failed to assign shipper: " + e.getMessage());
 		}
 		return "redirect:/warehouse/orders/" + id;
+	}
+
+	// OrderController.java - Thêm method reassign leg
+	@PostMapping("/orders/{orderId}/legs/{legId}/reassign")
+	public String reassignLeg(@PathVariable Long orderId, @PathVariable Long legId,
+			@RequestParam Long shipperId, RedirectAttributes redirectAttributes) {
+		try {
+			shipmentLegService.reassignLeg(legId, shipperId);
+			redirectAttributes.addFlashAttribute("success", "Đã phân công lại shipper");
+		} catch (Exception e) {
+			redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+		}
+		return "redirect:/warehouse/orders/" + orderId;
 	}
 
 	@PostMapping("/{id}/update-status")
