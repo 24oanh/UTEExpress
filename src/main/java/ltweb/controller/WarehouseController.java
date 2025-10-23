@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpSession;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Controller
@@ -32,19 +31,29 @@ public class WarehouseController {
     public String dashboard(Model model, Authentication auth, HttpSession session) {
         User user = authService.findByUsername(auth.getName());
         Warehouse warehouse = warehouseService.getWarehouseByUserId(user.getId());
-        
+
         session.setAttribute("currentUser", user);
         session.setAttribute("currentWarehouse", warehouse);
-        
+
         List<Order> pendingOrders = orderService.getOrdersByWarehouseAndStatus(warehouse.getId(), OrderStatus.CHO_GIAO);
-        List<Order> inProgressOrders = orderService.getOrdersByWarehouseAndStatus(warehouse.getId(), OrderStatus.DANG_GIAO);
+        List<Order> inProgressOrders = orderService.getOrdersByWarehouseAndStatus(warehouse.getId(),
+                OrderStatus.DANG_GIAO);
         List<Inventory> inventories = warehouseService.getInventoryByWarehouseId(warehouse.getId());
-        
+        List<Order> destinationPendingOrders = orderService.getOrdersByDestinationWarehouseAndStatus(warehouse.getId(),
+                OrderStatus.CHO_GIAO);
+        List<Order> destinationInProgressOrders = orderService
+                .getOrdersByDestinationWarehouseAndStatus(warehouse.getId(), OrderStatus.DANG_GIAO);
+
+        pendingOrders.addAll(destinationPendingOrders);
+        inProgressOrders.addAll(destinationInProgressOrders);
+
         long unreadNotifications = notificationService.countUnreadNotifications("WAREHOUSE", warehouse.getId());
-        
-        long totalOrders = orderService.getOrdersByWarehouseId(warehouse.getId()).size();
-        long completedOrders = orderService.countOrdersByWarehouseAndStatus(warehouse.getId(), OrderStatus.HOAN_THANH);
-        
+
+        long totalOrders = orderService.getOrdersByWarehouseId(warehouse.getId()).size()
+                + orderService.getOrdersByDestinationWarehouseId(warehouse.getId()).size();
+        long completedOrders = orderService.countOrdersByWarehouseAndStatus(warehouse.getId(), OrderStatus.HOAN_THANH)
+                + orderService.countOrdersByDestinationWarehouseAndStatus(warehouse.getId(), OrderStatus.HOAN_THANH);
+
         model.addAttribute("warehouse", warehouse);
         model.addAttribute("pendingOrders", pendingOrders);
         model.addAttribute("inProgressOrders", inProgressOrders);
@@ -52,7 +61,7 @@ public class WarehouseController {
         model.addAttribute("unreadNotifications", unreadNotifications);
         model.addAttribute("totalOrders", totalOrders);
         model.addAttribute("completedOrders", completedOrders);
-        
+
         return "warehouse/dashboard";
     }
 
@@ -65,8 +74,8 @@ public class WarehouseController {
 
     @PostMapping("/info/update")
     public String updateWarehouseInfo(@ModelAttribute Warehouse warehouseDetails,
-                                     HttpSession session,
-                                     RedirectAttributes redirectAttributes) {
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
         try {
             Warehouse warehouse = (Warehouse) session.getAttribute("currentWarehouse");
             warehouseService.updateWarehouse(warehouse.getId(), warehouseDetails);
@@ -103,8 +112,8 @@ public class WarehouseController {
 
     @PostMapping("/locations/create")
     public String createLocation(@ModelAttribute WarehouseLocation location,
-                                HttpSession session,
-                                RedirectAttributes redirectAttributes) {
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
         try {
             Warehouse warehouse = (Warehouse) session.getAttribute("currentWarehouse");
             location.setWarehouse(warehouse);
@@ -118,8 +127,8 @@ public class WarehouseController {
 
     @PostMapping("/locations/{id}/update-status")
     public String updateLocationStatus(@PathVariable Long id,
-                                      @RequestParam LocationStatus status,
-                                      RedirectAttributes redirectAttributes) {
+            @RequestParam LocationStatus status,
+            RedirectAttributes redirectAttributes) {
         try {
             warehouseService.updateLocationStatus(id, status);
             redirectAttributes.addFlashAttribute("success", "Location status updated successfully");
@@ -142,7 +151,7 @@ public class WarehouseController {
         Warehouse warehouse = (Warehouse) session.getAttribute("currentWarehouse");
         List<Order> orders = orderService.getOrdersByWarehouseId(warehouse.getId());
         List<WarehouseLocation> emptyLocations = warehouseService.getEmptyLocations(warehouse.getId());
-        
+
         model.addAttribute("receipt", new InboundReceipt());
         model.addAttribute("orders", orders);
         model.addAttribute("emptyLocations", emptyLocations);
@@ -151,30 +160,30 @@ public class WarehouseController {
 
     @PostMapping("/inbound/create")
     public String createInbound(@ModelAttribute InboundReceipt receipt,
-                               @RequestParam List<Long> packageIds,
-                               @RequestParam List<Integer> quantities,
-                               @RequestParam(required = false) List<Long> locationIds,
-                               HttpSession session,
-                               RedirectAttributes redirectAttributes) {
+            @RequestParam List<Long> packageIds,
+            @RequestParam List<Integer> quantities,
+            @RequestParam(required = false) List<Long> locationIds,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
         try {
             Warehouse warehouse = (Warehouse) session.getAttribute("currentWarehouse");
             User user = (User) session.getAttribute("currentUser");
-            
+
             receipt.setWarehouse(warehouse);
             receipt.setReceivedBy(user);
-            
+
             List<InboundReceiptDetail> details = new java.util.ArrayList<>();
             for (int i = 0; i < packageIds.size(); i++) {
                 InboundReceiptDetail detail = InboundReceiptDetail.builder()
                         .packageItem(Package.builder().id(packageIds.get(i)).build())
                         .quantity(quantities.get(i))
-                        .warehouseLocation(locationIds != null && i < locationIds.size() && locationIds.get(i) != null 
-                                ? WarehouseLocation.builder().id(locationIds.get(i)).build() 
+                        .warehouseLocation(locationIds != null && i < locationIds.size() && locationIds.get(i) != null
+                                ? WarehouseLocation.builder().id(locationIds.get(i)).build()
                                 : null)
                         .build();
                 details.add(detail);
             }
-            
+
             warehouseService.createInboundReceipt(receipt, details);
             redirectAttributes.addFlashAttribute("success", "Inbound receipt created successfully");
         } catch (Exception e) {
@@ -208,7 +217,7 @@ public class WarehouseController {
         List<Order> orders = orderService.getOrdersByWarehouseId(warehouse.getId());
         List<Inventory> availableInventory = warehouseService.getAvailableInventory(warehouse.getId());
         List<Shipper> shippers = shipmentService.getActiveShippers();
-        
+
         model.addAttribute("receipt", new OutboundReceipt());
         model.addAttribute("orders", orders);
         model.addAttribute("availableInventory", availableInventory);
@@ -218,17 +227,17 @@ public class WarehouseController {
 
     @PostMapping("/outbound/create")
     public String createOutbound(@ModelAttribute OutboundReceipt receipt,
-                                @RequestParam List<Long> packageIds,
-                                @RequestParam List<Integer> quantities,
-                                HttpSession session,
-                                RedirectAttributes redirectAttributes) {
+            @RequestParam List<Long> packageIds,
+            @RequestParam List<Integer> quantities,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
         try {
             Warehouse warehouse = (Warehouse) session.getAttribute("currentWarehouse");
             User user = (User) session.getAttribute("currentUser");
-            
+
             receipt.setWarehouse(warehouse);
             receipt.setIssuedBy(user);
-            
+
             List<OutboundReceiptDetail> details = new java.util.ArrayList<>();
             for (int i = 0; i < packageIds.size(); i++) {
                 OutboundReceiptDetail detail = OutboundReceiptDetail.builder()
@@ -237,7 +246,7 @@ public class WarehouseController {
                         .build();
                 details.add(detail);
             }
-            
+
             warehouseService.createOutboundReceipt(receipt, details);
             redirectAttributes.addFlashAttribute("success", "Outbound receipt created successfully");
         } catch (Exception e) {

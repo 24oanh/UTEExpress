@@ -89,6 +89,22 @@ public class ShipmentService {
 
 			trackingService.createTracking(shipment, 0.0, 0.0, "Shipment picked up and in transit",
 					TrackingStatus.IN_PROGRESS);
+
+			if (order.getWarehouse() != null) {
+				notificationService.createNotification("WAREHOUSE",
+						order.getWarehouse().getId(),
+						"Shipment in transit: " + shipment.getShipmentCode(),
+						NotificationType.ORDER_ASSIGNED,
+						order);
+			}
+
+			if (order.getDestinationWarehouse() != null) {
+				notificationService.createNotification("WAREHOUSE",
+						order.getDestinationWarehouse().getId(),
+						"Shipment in transit: " + shipment.getShipmentCode(),
+						NotificationType.ORDER_ASSIGNED,
+						order);
+			}
 		} else if (status == ShipmentStatus.DELIVERED) {
 			shipment.setDeliveryTime(LocalDateTime.now());
 
@@ -112,6 +128,15 @@ public class ShipmentService {
 						"Shipment delivered: " + shipment.getShipmentCode(), NotificationType.DELIVERY_COMPLETED,
 						shipment.getOrder());
 			}
+
+			if (shipment.getOrder().getDestinationWarehouse() != null) {
+				notificationService.createNotification("WAREHOUSE",
+						shipment.getOrder().getDestinationWarehouse().getId(),
+						"Shipment delivered: " + shipment.getShipmentCode(),
+						NotificationType.DELIVERY_COMPLETED,
+						shipment.getOrder());
+			}
+
 		} else if (status == ShipmentStatus.FAILED) {
 			Order order = shipment.getOrder();
 			order.setStatus(OrderStatus.THAT_BAI);

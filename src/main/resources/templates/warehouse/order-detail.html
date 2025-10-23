@@ -90,7 +90,6 @@
 						<th>Shipper</th>
 						<th>Khoảng cách (km)</th>
 						<th>Thời gian dự kiến (h)</th>
-						<th>Trạng thái</th>
 						<th>Chặng cuối</th>
 					</tr>
 				</thead>
@@ -105,8 +104,6 @@
 							th:text="${leg.shipper != null ? leg.shipper.name : 'Chưa phân'}"></td>
 						<td th:text="${leg.distanceKm}"></td>
 						<td th:text="${leg.estimatedHours}"></td>
-						<td><span th:class="'badge badge-' + ${leg.status}"
-							th:text="${leg.status}"></span></td>
 						<td><span
 							th:class="${leg.isFinalLeg ? 'badge badge-success' : 'badge badge-secondary'}"
 							th:text="${leg.isFinalLeg ? 'Cuối' : 'Trung gian'}"></span></td>

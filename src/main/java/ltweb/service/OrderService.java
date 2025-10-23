@@ -132,6 +132,20 @@ public class OrderService {
 		return orderRepository.findByShipperIdAndStatus(shipperId, status);
 	}
 
+	// OrderService.java - Thêm methods
+
+	public List<Order> getOrdersByDestinationWarehouseId(Long destinationWarehouseId) {
+		return orderRepository.findByDestinationWarehouseId(destinationWarehouseId);
+	}
+
+	public List<Order> getOrdersByDestinationWarehouseAndStatus(Long destinationWarehouseId, OrderStatus status) {
+		return orderRepository.findByDestinationWarehouseIdAndStatus(destinationWarehouseId, status);
+	}
+
+	public long countOrdersByDestinationWarehouseAndStatus(Long destinationWarehouseId, OrderStatus status) {
+		return orderRepository.countByDestinationWarehouseIdAndStatus(destinationWarehouseId, status);
+	}
+
 	@Transactional
 	public Order updateOrder(Long id, Order orderDetails) {
 		Order order = getOrderById(id);
@@ -149,14 +163,31 @@ public class OrderService {
 	@Transactional
 	public Order updateOrderStatus(Long orderId, OrderStatus status) {
 		Order order = getOrderById(orderId);
-		OrderStatus oldStatus = order.getStatus();
 		order.setStatus(status);
 		Order savedOrder = orderRepository.save(order);
 
+		Shipment shipment = shipmentRepository.findByOrderId(orderId).orElse(null);
+		if (shipment != null) {
+			if (status == OrderStatus.DANG_GIAO) {
+				shipment.setStatus(ShipmentStatus.IN_TRANSIT);
+			} else if (status == OrderStatus.HOAN_THANH) {
+				shipment.setStatus(ShipmentStatus.DELIVERED);
+			} else if (status == OrderStatus.THAT_BAI) {
+				shipment.setStatus(ShipmentStatus.FAILED);
+			}
+			shipmentRepository.save(shipment);
+		}
 		if (status == OrderStatus.HOAN_THANH) {
 			if (order.getWarehouse() != null) {
 				notificationService.createNotification("WAREHOUSE", order.getWarehouse().getId(),
 						"Order completed: " + order.getOrderCode(), NotificationType.ORDER_COMPLETED, savedOrder);
+			}
+
+			if (order.getDestinationWarehouse() != null) {
+				notificationService.createNotification("WAREHOUSE",
+						order.getDestinationWarehouse().getId(),
+						"Order completed: " + order.getOrderCode(),
+						NotificationType.ORDER_COMPLETED, savedOrder);
 			}
 
 			List<Package> packages = packageRepository.findByOrderId(orderId);
@@ -168,6 +199,13 @@ public class OrderService {
 			if (order.getWarehouse() != null) {
 				notificationService.createNotification("WAREHOUSE", order.getWarehouse().getId(),
 						"Order failed: " + order.getOrderCode(), NotificationType.ORDER_FAILED, savedOrder);
+			}
+
+			if (order.getDestinationWarehouse() != null) {
+				notificationService.createNotification("WAREHOUSE",
+						order.getDestinationWarehouse().getId(),
+						"Order failed: " + order.getOrderCode(),
+						NotificationType.ORDER_FAILED, savedOrder);
 			}
 		}
 
