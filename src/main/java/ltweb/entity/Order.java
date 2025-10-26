@@ -52,17 +52,17 @@ public class Order {
 
     @ManyToOne
     @JoinColumn(name = "warehouse_id")
-    @JsonIgnoreProperties({"user"})  
+    @JsonIgnoreProperties({ "user" })
     private Warehouse warehouse;
-    
+
     @ManyToOne
     @JoinColumn(name = "destination_warehouse_id")
-    @JsonIgnoreProperties({"user"})
+    @JsonIgnoreProperties({ "user" })
     private Warehouse destinationWarehouse;
 
     @ManyToOne
     @JoinColumn(name = "shipper_id")
-    @JsonIgnoreProperties({"user"})  
+    @JsonIgnoreProperties({ "user" })
     private Shipper shipper;
 
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -71,10 +71,24 @@ public class Order {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "is_confirmed")
+    private Boolean isConfirmed;
+
+    @Column(name = "confirmed_by")
+    private Long confirmedBy;
+
+    @Column(name = "confirmed_at")
+    private LocalDateTime confirmedAt;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-        status = OrderStatus.CHO_GIAO;
+        if (status == null) {
+            status = OrderStatus.CHO_XAC_NHAN;
+        }
+        if (isConfirmed == null) {
+            isConfirmed = false;
+        }
     }
 
     @PreUpdate

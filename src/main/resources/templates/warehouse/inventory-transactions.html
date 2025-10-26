@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Lịch sử giao dịch</title>
+    <link rel="stylesheet" th:href="@{/css/warehouse.css}">
+</head>
+
+<body>
+    <div th:replace="~{fragments/warehouse-header :: header}"></div>
+    <div class="container">
+        <div class="page-header">
+            <h1>Lịch sử giao dịch kho</h1>
+            <div>
+                <a th:href="@{/warehouse/inventory/transactions/record-inbound}" class="btn-primary">Ghi nhận nhập</a>
+                <a th:href="@{/warehouse/inventory/transactions/transfer-location}" class="btn-secondary">Chuyển vị
+                    trí</a>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Thời gian</th>
+                    <th>Loại GD</th>
+                    <th>Kiện hàng</th>
+                    <th>Số lượng</th>
+                    <th>Từ vị trí</th>
+                    <th>Đến vị trí</th>
+                    <th>Người thực hiện</th>
+                    <th>Ghi chú</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="tx : ${transactions}">
+                    <td th:text="${#temporals.format(tx.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+                    <td><span th:class="'badge badge-' + ${tx.type}" th:text="${tx.type}"></span></td>
+                    <td th:text="${tx.packageItem.packageCode}"></td>
+                    <td th:text="${tx.quantity}"></td>
+                    <td th:text="${tx.fromLocation != null ? tx.fromLocation.locationCode : '-'}"></td>
+                    <td th:text="${tx.toLocation != null ? tx.toLocation.locationCode : '-'}"></td>
+                    <td th:text="${tx.performedBy.fullName}"></td>
+                    <td th:text="${tx.notes ?: '-'}"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+
+</html>

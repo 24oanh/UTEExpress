@@ -26,7 +26,9 @@ public class WarehouseController {
     private final NotificationService notificationService;
     private final AuthService authService;
     private final ShipmentService shipmentService;
+    private final CustomerOrderService customerOrderService;
 
+    // Thay thế method dashboard
     @GetMapping("/dashboard")
     public String dashboard(Model model, Authentication auth, HttpSession session) {
         User user = authService.findByUsername(auth.getName());
@@ -35,28 +37,41 @@ public class WarehouseController {
         session.setAttribute("currentUser", user);
         session.setAttribute("currentWarehouse", warehouse);
 
+        // Đơn hàng từ kho này
         List<Order> pendingOrders = orderService.getOrdersByWarehouseAndStatus(warehouse.getId(), OrderStatus.CHO_GIAO);
         List<Order> inProgressOrders = orderService.getOrdersByWarehouseAndStatus(warehouse.getId(),
                 OrderStatus.DANG_GIAO);
-        List<Inventory> inventories = warehouseService.getInventoryByWarehouseId(warehouse.getId());
+
+        // Đơn hàng đến kho này
         List<Order> destinationPendingOrders = orderService.getOrdersByDestinationWarehouseAndStatus(warehouse.getId(),
                 OrderStatus.CHO_GIAO);
         List<Order> destinationInProgressOrders = orderService
                 .getOrdersByDestinationWarehouseAndStatus(warehouse.getId(), OrderStatus.DANG_GIAO);
 
+        // Đơn hàng chờ tiếp nhận từ khách
+        List<CustomerOrder> customerOrders = customerOrderService.getPendingOrdersByWarehouse(warehouse.getCode());
+
+        // Đơn chờ xác nhận kiện
+        List<Order> unconfirmedOrders = orderService.getUnconfirmedOrders(warehouse.getId());
+
         pendingOrders.addAll(destinationPendingOrders);
         inProgressOrders.addAll(destinationInProgressOrders);
+
+        List<Inventory> inventories = warehouseService.getInventoryByWarehouseId(warehouse.getId());
 
         long unreadNotifications = notificationService.countUnreadNotifications("WAREHOUSE", warehouse.getId());
 
         long totalOrders = orderService.getOrdersByWarehouseId(warehouse.getId()).size()
-                + orderService.getOrdersByDestinationWarehouseId(warehouse.getId()).size();
+                + orderService.getOrdersByDestinationWarehouseId(warehouse.getId()).size()
+                + customerOrders.size() + unconfirmedOrders.size();
         long completedOrders = orderService.countOrdersByWarehouseAndStatus(warehouse.getId(), OrderStatus.HOAN_THANH)
                 + orderService.countOrdersByDestinationWarehouseAndStatus(warehouse.getId(), OrderStatus.HOAN_THANH);
 
         model.addAttribute("warehouse", warehouse);
         model.addAttribute("pendingOrders", pendingOrders);
         model.addAttribute("inProgressOrders", inProgressOrders);
+        model.addAttribute("customerOrders", customerOrders);
+        model.addAttribute("unconfirmedOrders", unconfirmedOrders);
         model.addAttribute("inventories", inventories);
         model.addAttribute("unreadNotifications", unreadNotifications);
         model.addAttribute("totalOrders", totalOrders);

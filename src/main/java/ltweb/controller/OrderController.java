@@ -2,7 +2,9 @@ package ltweb.controller;
 
 import ltweb.entity.*;
 import ltweb.entity.Package;
+import ltweb.service.CustomerOrderService;
 import ltweb.service.OrderService;
+import ltweb.service.PackageConfirmationService;
 import ltweb.service.ShipmentLegService;
 import ltweb.service.ShipmentService;
 import ltweb.service.WarehouseService;
@@ -28,6 +30,8 @@ public class OrderController {
 	private final WarehouseService warehouseService;
 	private final ShipmentLegRepository shipmentLegRepository;
 	private final ShipmentLegService shipmentLegService;
+	private final CustomerOrderService customerOrderService;
+	private final PackageConfirmationService packageConfirmationService;
 
 	@GetMapping
 	public String listOrders(Model model, HttpSession session) {
@@ -38,21 +42,127 @@ public class OrderController {
 	}
 
 	@GetMapping("/{id}")
-	public String orderDetail(@PathVariable Long id, Model model) {
+	public String orderDetail(@PathVariable Long id, Model model, HttpSession session) {
 		Order order = orderService.getOrderById(id);
 		List<Package> packages = orderService.getPackagesByOrderId(id);
-		List<Shipper> availableShippers = shipmentService.getActiveShippers();
-
+		List<Shipper> availableShippers = shipmentService.getAllShippers();
+		
 		Shipment shipment = shipmentService.getShipmentByOrderId(id);
+		List<ShipmentLeg> legs = null;
 		if (shipment != null) {
-			List<ShipmentLeg> legs = shipmentLegRepository.findByShipmentIdOrderByLegSequence(shipment.getId());
-			model.addAttribute("shipmentLegs", legs);
+			legs = shipmentLegRepository.findByShipmentIdOrderByLegSequence(shipment.getId());
 		}
 
 		model.addAttribute("order", order);
 		model.addAttribute("packages", packages);
 		model.addAttribute("availableShippers", availableShippers);
+		model.addAttribute("shipment", shipment);
+		model.addAttribute("shipmentLegs", legs);
+
 		return "warehouse/order-detail";
+	}
+
+	@GetMapping("/pending")
+	public String pendingOrders(Model model, HttpSession session) {
+		Warehouse warehouse = (Warehouse) session.getAttribute("currentWarehouse");
+		List<CustomerOrder> customerOrders = customerOrderService.getPendingOrdersByWarehouse(warehouse.getCode());
+		List<Order> unconfirmedOrders = orderService.getUnconfirmedOrders(warehouse.getId());
+
+		model.addAttribute("customerOrders", customerOrders);
+		model.addAttribute("unconfirmedOrders", unconfirmedOrders);
+		return "warehouse/pending-orders";
+	}
+
+	@PostMapping("/accept-customer-order/{id}")
+	public String acceptCustomerOrder(@PathVariable Long id,
+			HttpSession session,
+			RedirectAttributes redirectAttributes) {
+		try {
+			System.out.println("Accepting customer order: " + id);
+			Order order = customerOrderService.acceptSingleOrder(id);
+			System.out.println("Order created: " + order.getOrderCode());
+			redirectAttributes.addFlashAttribute("success", "Đã tiếp nhận đơn hàng " + order.getOrderCode());
+		} catch (Exception e) {
+			System.err.println("Error accepting order: " + e.getMessage());
+			e.printStackTrace();
+			redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+		}
+		return "redirect:/warehouse/orders/pending";
+	}
+
+	@PostMapping("/{id}/auto-assign-shipper")
+	public String autoAssignShipper(@PathVariable Long id,
+			RedirectAttributes redirectAttributes) {
+		try {
+			orderService.autoAssignShipper(id);
+			redirectAttributes.addFlashAttribute("success", "Đã tự động phân công shipper");
+		} catch (Exception e) {
+			redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+		}
+		return "redirect:/warehouse/orders/" + id;
+	}
+
+	@GetMapping("/{id}/confirm-packages")
+	public String confirmPackagesForm(@PathVariable Long id, Model model) {
+		Order order = orderService.getOrderById(id);
+		List<PackageConfirmation> confirmations = packageConfirmationService.getConfirmationsByOrder(id);
+
+		boolean allConfirmed = confirmations.stream().allMatch(PackageConfirmation::getIsConfirmed);
+
+		model.addAttribute("order", order);
+		model.addAttribute("confirmations", confirmations);
+		model.addAttribute("allConfirmed", allConfirmed);
+		return "warehouse/confirm-packages";
+	}
+
+	@PostMapping("/{orderId}/confirm-package/{confirmationId}")
+	public String confirmPackage(@PathVariable Long orderId,
+			@PathVariable Long confirmationId,
+			@RequestParam Double weight,
+			@RequestParam Double length,
+			@RequestParam Double width,
+			@RequestParam Double height,
+			@RequestParam(required = false) String notes,
+			HttpSession session,
+			RedirectAttributes redirectAttributes) {
+		try {
+			User user = (User) session.getAttribute("currentUser");
+
+			PackageConfirmation confirmation = packageConfirmationService.getConfirmationRepository()
+					.findById(confirmationId)
+					.orElseThrow(() -> new RuntimeException("Not found"));
+
+			confirmation.setWeight(weight);
+			confirmation.setLength(length);
+			confirmation.setWidth(width);
+			confirmation.setHeight(height);
+			confirmation.setNotes(notes);
+			packageConfirmationService.getConfirmationRepository().save(confirmation);
+
+			packageConfirmationService.confirmPackage(confirmationId, user);
+
+			redirectAttributes.addFlashAttribute("success", "Đã xác nhận kiện hàng");
+		} catch (Exception e) {
+			redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+			e.printStackTrace();
+		}
+		return "redirect:/warehouse/orders/" + orderId + "/confirm-packages";
+	}
+
+	@PostMapping("/{id}/confirm-order")
+	public String confirmOrder(@PathVariable Long id,
+			HttpSession session,
+			RedirectAttributes redirectAttributes) {
+		try {
+			User user = (User) session.getAttribute("currentUser");
+			orderService.confirmOrder(id, user);
+			redirectAttributes.addFlashAttribute("success", "Đã xác nhận đơn hàng và tạo phiếu nhập kho");
+			return "redirect:/warehouse/orders/" + id;
+		} catch (Exception e) {
+			redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+			e.printStackTrace();
+			return "redirect:/warehouse/orders/" + id + "/confirm-packages";
+		}
 	}
 
 	@GetMapping("/create")

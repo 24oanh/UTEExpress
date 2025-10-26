@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Xác nhận kiện hàng</title>
+    <link rel="stylesheet" th:href="@{/css/warehouse.css}">
+</head>
+
+<body>
+    <div th:replace="~{fragments/warehouse-header :: header}"></div>
+    <div class="container">
+        <div class="page-header">
+            <h1>Xác nhận kiện hàng - <span th:text="${order.orderCode}"></span></h1>
+            <a th:href="@{/warehouse/orders/pending}" class="btn-secondary">Quay lại</a>
+        </div>
+
+        <div th:if="${success}" class="alert success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert error" th:text="${error}"></div>
+
+        <div class="detail-grid">
+            <div class="detail-card">
+                <h3>Thông tin đơn</h3>
+                <p><strong>Người gửi:</strong> <span th:text="${order.senderName}"></span></p>
+                <p><strong>Người nhận:</strong> <span th:text="${order.recipientName}"></span></p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Danh sách kiện hàng</h3>
+            <div th:each="conf : ${confirmations}" class="detail-card">
+                <h4>
+                    <span th:text="${conf.packageCode}"></span>
+                    <span th:if="${conf.isConfirmed}" class="badge badge-success">Đã xác nhận</span>
+                    <span th:unless="${conf.isConfirmed}" class="badge badge-pending">Chờ xác nhận</span>
+                </h4>
+                <p><strong>Mô tả:</strong> <span th:text="${conf.description}"></span></p>
+
+                <div th:unless="${conf.isConfirmed}">
+                    <form
+                        th:action="@{/warehouse/orders/{orderId}/confirm-package/{confirmationId}(orderId=${order.id}, confirmationId=${conf.id})}"
+                        method="post" class="form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Trọng lượng (kg) *</label>
+                                <input type="number" name="weight" step="0.1" th:value="${conf.weight}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Dài (cm) *</label>
+                                <input type="number" name="length" step="0.1" th:value="${conf.length}" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Rộng (cm) *</label>
+                                <input type="number" name="width" step="0.1" th:value="${conf.width}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Cao (cm) *</label>
+                                <input type="number" name="height" step="0.1" th:value="${conf.height}" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Ghi chú</label>
+                            <textarea name="notes" rows="2"></textarea>
+                        </div>
+                        <button type="submit" class="btn-primary">Xác nhận kiện này</button>
+                    </form>
+                </div>
+                <div th:if="${conf.isConfirmed}">
+                    <p><strong>Trọng lượng:</strong> <span th:text="${conf.weight} + ' kg'"></span></p>
+                    <p><strong>Kích thước:</strong> <span
+                            th:text="${conf.length} + 'x' + ${conf.width} + 'x' + ${conf.height} + ' cm'"></span></p>
+                    <p th:if="${conf.notes}"><strong>Ghi chú:</strong> <span th:text="${conf.notes}"></span></p>
+                    <p><strong>Xác nhận bởi:</strong> <span th:text="${conf.confirmedBy}"></span></p>
+                    <p><strong>Thời gian:</strong> <span
+                            th:text="${#temporals.format(conf.confirmedAt, 'dd/MM/yyyy HH:mm')}"></span></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" th:if="${#lists.isEmpty(confirmations) == false}">
+            <h3>Xác nhận toàn bộ đơn hàng</h3>
+            <div th:if="${confirmations.size() > 0}">
+                <div th:with="allConfirmed=${true}">
+                    <th:block th:each="conf : ${confirmations}">
+                        <th:block th:if="${!conf.isConfirmed}" th:with="allConfirmed=${false}"></th:block>
+                    </th:block>
+
+                    <div th:if="${allConfirmed}">
+                        <p>Tất cả kiện hàng đã được xác nhận. Bấm nút bên dưới để hoàn tất xác nhận đơn hàng.</p>
+                        <form th:action="@{/warehouse/orders/{id}/confirm-order(id=${order.id})}" method="post">
+                            <button type="submit" class="btn-primary btn-lg"
+                                onclick="return confirm('Xác nhận hoàn tất đơn hàng?')">
+                                Xác nhận đơn hàng
+                            </button>
+                        </form>
+                    </div>
+
+                    <div th:unless="${allConfirmed}">
+                        <p class="text-danger">Vui lòng xác nhận tất cả các kiện hàng trước khi hoàn tất đơn hàng.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

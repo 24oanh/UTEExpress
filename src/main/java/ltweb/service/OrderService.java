@@ -4,6 +4,7 @@ import ltweb.entity.*;
 import ltweb.entity.Package;
 import ltweb.repository.*;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,255 @@ public class OrderService {
 	private final ShipmentRepository shipmentRepository;
 	private final ShipmentLegService shipmentLegService;
 	private final ShipmentLegRepository shipmentLegRepository;
+	private final WarehouseRepository warehouseRepository;
+	private final PackageConfirmationService packageConfirmationService;
+	private final CustomerOrderService customerOrderService;
+	private final InboundReceiptRepository inboundReceiptRepository;
+	private final InboundReceiptDetailRepository inboundReceiptDetailRepository;
+	private final InventoryRepository inventoryRepository;
+	private final OutboundReceiptRepository outboundReceiptRepository;
+	private final OutboundReceiptDetailRepository outboundReceiptDetailRepository;
+
+	@Transactional
+	public Order createOrderFromCustomerOrder(CustomerOrder customerOrder) {
+		Warehouse fromWarehouse = warehouseRepository.findByCode(customerOrder.getFromWarehouseCode())
+				.orElseThrow(() -> new RuntimeException("From warehouse not found"));
+		Warehouse toWarehouse = warehouseRepository.findByCode(customerOrder.getToWarehouseCode())
+				.orElseThrow(() -> new RuntimeException("To warehouse not found"));
+
+		Order order = Order.builder()
+				.orderCode("ORD" + System.currentTimeMillis())
+				.senderName(customerOrder.getSenderName())
+				.senderPhone(customerOrder.getSenderPhone())
+				.senderAddress(customerOrder.getSenderAddress())
+				.recipientName(customerOrder.getRecipientName())
+				.recipientPhone(customerOrder.getRecipientPhone())
+				.recipientAddress(customerOrder.getRecipientAddress())
+				.shipmentFee(customerOrder.getEstimatedFee())
+				.notes(customerOrder.getNotes())
+				.warehouse(fromWarehouse)
+				.destinationWarehouse(toWarehouse)
+				.isConfirmed(false)
+				.build();
+
+		Order savedOrder = orderRepository.save(order);
+
+		// Create package confirmations
+		String[] descriptions = customerOrder.getPackageDescription().split(";");
+		for (int i = 0; i < descriptions.length; i++) {
+			PackageConfirmation confirmation = PackageConfirmation.builder()
+					.order(savedOrder)
+					.packageCode("PKG" + savedOrder.getId() + "-" + (i + 1))
+					.description(descriptions[i].trim())
+					.weight(customerOrder.getTotalWeight() / descriptions.length)
+					.length(0.0)
+					.width(0.0)
+					.height(0.0)
+					.unitQuantity(1)
+					.build();
+			packageConfirmationService.createConfirmation(confirmation);
+		}
+
+		customerOrderService.markAsProcessed(customerOrder.getId(), savedOrder.getId());
+
+		notificationService.createNotification("WAREHOUSE", fromWarehouse.getId(),
+				"Đơn hàng mới từ khách: " + savedOrder.getOrderCode(),
+				NotificationType.ORDER_CREATED, savedOrder);
+
+		return savedOrder;
+	}
+
+	// OrderService.java - Sửa method createInboundForOrder
+	@Transactional
+	private void createInboundForOrder(Order order, User user) {
+		List<Package> packages = packageRepository.findByOrderId(order.getId());
+
+		if (packages.isEmpty()) {
+			throw new RuntimeException("Không có kiện hàng nào");
+		}
+
+		InboundReceipt receipt = InboundReceipt.builder()
+				.receiptCode("IB-" + order.getOrderCode() + "-" + System.currentTimeMillis())
+				.warehouse(order.getWarehouse())
+				.order(order)
+				.receivedBy(user)
+				.receivedDate(LocalDateTime.now())
+				.status(ReceiptStatus.APPROVED)
+				.notes("Nhập kho từ đơn " + order.getOrderCode())
+				.build();
+
+		InboundReceipt savedReceipt = inboundReceiptRepository.save(receipt);
+
+		for (Package pkg : packages) {
+			InboundReceiptDetail detail = InboundReceiptDetail.builder()
+					.inboundReceipt(savedReceipt)
+					.packageItem(pkg)
+					.quantity(pkg.getUnitQuantity() != null ? pkg.getUnitQuantity() : 1)
+					.notes("Nhập kho tự động")
+					.build();
+			inboundReceiptDetailRepository.save(detail);
+
+			Inventory inventory = inventoryRepository
+					.findByWarehouseIdAndPackageItemId(order.getWarehouse().getId(), pkg.getId())
+					.orElse(Inventory.builder()
+							.warehouse(order.getWarehouse())
+							.packageItem(pkg)
+							.quantity(0)
+							.deliveredQuantity(0)
+							.remainingQuantity(0)
+							.build());
+
+			int qty = pkg.getUnitQuantity() != null ? pkg.getUnitQuantity() : 1;
+			inventory.setQuantity(inventory.getQuantity() + qty);
+			inventory.setRemainingQuantity(inventory.getRemainingQuantity() + qty);
+			inventoryRepository.save(inventory);
+
+			pkg.setStatus(PackageStatus.KHO);
+			packageRepository.save(pkg);
+		}
+
+		Warehouse warehouse = order.getWarehouse();
+		Integer totalStock = inventoryRepository.getTotalRemainingQuantityByWarehouseId(warehouse.getId());
+		warehouse.setCurrentStock(totalStock != null ? totalStock : 0);
+		warehouseRepository.save(warehouse);
+	}
+
+	@Transactional
+	public void autoAssignShipper(Long orderId) {
+		Order order = orderRepository.findById(orderId)
+				.orElseThrow(() -> new RuntimeException("Order not found"));
+
+		if (order.getStatus() != OrderStatus.CHO_GIAO) {
+			throw new RuntimeException("Đơn hàng không ở trạng thái chờ giao");
+		}
+
+		if (!order.getIsConfirmed()) {
+			throw new RuntimeException("Đơn hàng chưa được xác nhận");
+		}
+
+		List<Package> packages = packageRepository.findByOrderId(orderId);
+		if (packages.isEmpty()) {
+			throw new RuntimeException("Đơn hàng chưa có kiện hàng");
+		}
+
+		for (Package pkg : packages) {
+			Inventory inventory = inventoryRepository
+					.findByWarehouseIdAndPackageItemId(order.getWarehouse().getId(), pkg.getId())
+					.orElse(null);
+
+			if (inventory == null
+					|| inventory.getRemainingQuantity() < (pkg.getUnitQuantity() != null ? pkg.getUnitQuantity() : 1)) {
+				throw new RuntimeException(
+						"Kiện hàng " + pkg.getPackageCode() + " chưa nhập kho hoặc không đủ số lượng");
+			}
+		}
+
+		List<Shipper> allShippers = shipperRepository.findAll();
+		if (allShippers.isEmpty()) {
+			throw new RuntimeException("Không có shipper nào trong hệ thống");
+		}
+
+		Shipper shipper = allShippers.get(0);
+
+		createOutboundForOrder(order, shipper);
+
+		order.setShipper(shipper);
+		order.setStatus(OrderStatus.DANG_GIAO);
+		orderRepository.save(order);
+
+		Shipment shipment = shipmentRepository.findByOrderId(orderId).orElse(null);
+		if (shipment == null) {
+			shipment = Shipment.builder()
+					.shipmentCode("SH" + System.currentTimeMillis())
+					.order(order)
+					.shipper(shipper)
+					.status(ShipmentStatus.IN_TRANSIT)
+					.build();
+			shipment = shipmentRepository.save(shipment);
+			shipmentLegService.createShipmentLegs(shipment, order);
+		} else {
+			shipment.setShipper(shipper);
+			shipment.setStatus(ShipmentStatus.IN_TRANSIT);
+			shipmentRepository.save(shipment);
+		}
+
+		ShipmentLeg firstLeg = shipmentLegRepository
+				.findFirstByShipmentIdAndStatusOrderByLegSequence(shipment.getId(), ShipmentStatus.PENDING)
+				.orElse(null);
+
+		if (firstLeg != null) {
+			firstLeg.setShipper(shipper);
+			firstLeg.setStatus(ShipmentStatus.IN_TRANSIT);
+			shipmentLegRepository.save(firstLeg);
+		}
+
+		notificationService.createNotification("SHIPPER", shipper.getId(),
+				"Đơn hàng mới: " + order.getOrderCode() + " đã được phân công",
+				NotificationType.ORDER_ASSIGNED, order);
+
+		notificationService.createNotification("WAREHOUSE", order.getWarehouse().getId(),
+				"Đơn hàng " + order.getOrderCode() + " đã xuất kho và phân công cho " + shipper.getName(),
+				NotificationType.ORDER_ASSIGNED, order);
+	}
+
+	@Transactional
+	private void createOutboundForOrder(Order order, Shipper shipper) {
+		List<Package> packages = packageRepository.findByOrderId(order.getId());
+
+		if (packages.isEmpty()) {
+			throw new RuntimeException("Không có kiện hàng nào");
+		}
+
+		OutboundReceipt receipt = OutboundReceipt.builder()
+				.receiptCode("OB-" + order.getOrderCode() + "-" + System.currentTimeMillis())
+				.warehouse(order.getWarehouse())
+				.order(order)
+				.shipper(shipper)
+				.issuedBy(order.getWarehouse().getUser())
+				.issuedDate(LocalDateTime.now())
+				.status(ReceiptStatus.APPROVED)
+				.notes("Xuất kho giao cho " + shipper.getName())
+				.build();
+
+		OutboundReceipt savedReceipt = outboundReceiptRepository.save(receipt);
+
+		for (Package pkg : packages) {
+			int qty = pkg.getUnitQuantity() != null ? pkg.getUnitQuantity() : 1;
+
+			Inventory inventory = inventoryRepository
+					.findByWarehouseIdAndPackageItemId(order.getWarehouse().getId(), pkg.getId())
+					.orElseThrow(() -> new RuntimeException("Kiện hàng " + pkg.getPackageCode() + " chưa nhập kho"));
+
+			if (inventory.getRemainingQuantity() < qty) {
+				throw new RuntimeException("Không đủ hàng trong kho cho kiện " + pkg.getPackageCode() +
+						". Cần: " + qty + ", Còn: " + inventory.getRemainingQuantity());
+			}
+
+			OutboundReceiptDetail detail = OutboundReceiptDetail.builder()
+					.outboundReceipt(savedReceipt)
+					.packageItem(pkg)
+					.quantity(qty)
+					.notes("Xuất kho tự động cho giao hàng")
+					.build();
+			outboundReceiptDetailRepository.save(detail);
+
+			inventory.setDeliveredQuantity(inventory.getDeliveredQuantity() + qty);
+			inventory.setRemainingQuantity(inventory.getRemainingQuantity() - qty);
+			inventoryRepository.save(inventory);
+
+			pkg.setStatus(PackageStatus.DANG_VAN_CHUYEN);
+			packageRepository.save(pkg);
+		}
+
+		Warehouse warehouse = order.getWarehouse();
+		Integer totalStock = inventoryRepository.getTotalRemainingQuantityByWarehouseId(warehouse.getId());
+		warehouse.setCurrentStock(totalStock != null ? totalStock : 0);
+		warehouseRepository.save(warehouse);
+	}
+
+	public List<Order> getUnconfirmedOrders(Long warehouseId) {
+		return orderRepository.findByIsConfirmedFalseAndWarehouseId(warehouseId);
+	}
 
 	@Transactional
 	public Order createOrder(Order order) {
@@ -132,8 +382,6 @@ public class OrderService {
 		return orderRepository.findByShipperIdAndStatus(shipperId, status);
 	}
 
-	// OrderService.java - Thêm methods
-
 	public List<Order> getOrdersByDestinationWarehouseId(Long destinationWarehouseId) {
 		return orderRepository.findByDestinationWarehouseId(destinationWarehouseId);
 	}
@@ -144,6 +392,30 @@ public class OrderService {
 
 	public long countOrdersByDestinationWarehouseAndStatus(Long destinationWarehouseId, OrderStatus status) {
 		return orderRepository.countByDestinationWarehouseIdAndStatus(destinationWarehouseId, status);
+	}
+
+	@Transactional
+	public Order confirmOrder(Long orderId, User confirmedBy) {
+		Order order = orderRepository.findById(orderId)
+				.orElseThrow(() -> new RuntimeException("Order not found"));
+
+		if (packageConfirmationService.hasUnconfirmedPackages(orderId)) {
+			throw new RuntimeException("Vẫn còn kiện hàng chưa xác nhận");
+		}
+
+		order.setIsConfirmed(true);
+		order.setConfirmedBy(confirmedBy.getId());
+		order.setConfirmedAt(LocalDateTime.now());
+		order.setStatus(OrderStatus.CHO_GIAO);
+		Order savedOrder = orderRepository.save(order);
+
+		createInboundForOrder(savedOrder, confirmedBy);
+
+		notificationService.createNotification("WAREHOUSE", order.getWarehouse().getId(),
+				"Đơn hàng " + order.getOrderCode() + " đã nhập kho và sẵn sàng để giao",
+				NotificationType.ORDER_CREATED, savedOrder);
+
+		return savedOrder;
 	}
 
 	@Transactional

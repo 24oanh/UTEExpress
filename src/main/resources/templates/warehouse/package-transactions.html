@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Lịch sử kiện hàng</title>
+    <link rel="stylesheet" th:href="@{/css/warehouse.css}">
+</head>
+
+<body>
+    <div th:replace="~{fragments/warehouse-header :: header}"></div>
+    <div class="container">
+        <div class="page-header">
+            <h1>Lịch sử kiện hàng - <span th:text="${package.packageCode}"></span></h1>
+            <a th:href="@{/warehouse/inventory/transactions}" class="btn-secondary">Quay lại</a>
+        </div>
+
+        <div class="detail-card">
+            <h3>Thông tin kiện</h3>
+            <p><strong>Mã kiện:</strong> <span th:text="${package.packageCode}"></span></p>
+            <p><strong>Mô tả:</strong> <span th:text="${package.description}"></span></p>
+            <p><strong>Trọng lượng:</strong> <span th:text="${package.weight} + ' kg'"></span></p>
+            <p><strong>Kích thước:</strong> <span
+                    th:text="${package.length} + 'x' + ${package.width} + 'x' + ${package.height} + ' cm'"></span></p>
+            <p><strong>Trạng thái:</strong> <span th:class="'badge badge-' + ${package.status}"
+                    th:text="${package.status}"></span></p>
+        </div>
+
+        <div class="section">
+            <h3>Lịch sử giao dịch</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Thời gian</th>
+                        <th>Loại</th>
+                        <th>Số lượng</th>
+                        <th>Từ vị trí</th>
+                        <th>Đến vị trí</th>
+                        <th>Người thực hiện</th>
+                        <th>Ghi chú</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="tx : ${transactions}">
+                        <td th:text="${#temporals.format(tx.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+                        <td><span th:class="'badge badge-' + ${tx.type}" th:text="${tx.type}"></span></td>
+                        <td th:text="${tx.quantity}"></td>
+                        <td th:text="${tx.fromLocation != null ? tx.fromLocation.locationCode : '-'}"></td>
+                        <td th:text="${tx.toLocation != null ? tx.toLocation.locationCode : '-'}"></td>
+                        <td th:text="${tx.performedBy.fullName}"></td>
+                        <td th:text="${tx.notes ?: '-'}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+
+</html>

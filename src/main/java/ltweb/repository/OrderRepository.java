@@ -24,6 +24,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     List<Order> findByWarehouseIdAndStatus(Long warehouseId, OrderStatus status);
 
+    List<Order> findByIsConfirmedFalseAndWarehouseId(Long warehouseId);
+
+    List<Order> findByStatusAndWarehouseId(OrderStatus status, Long warehouseId);
+
     List<Order> findByShipperIdAndStatus(Long shipperId, OrderStatus status);
     // OrderRepository.java - Thêm methods
 

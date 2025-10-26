@@ -22,7 +22,6 @@ public class ShipmentService {
 	private final ShipmentLegService shipmentLegService;
 	private final ShipmentLegRepository shipmentLegRepository;
 
-
 	public List<Shipment> getAllShipments() {
 		return shipmentRepository.findAll();
 	}
@@ -169,6 +168,11 @@ public class ShipmentService {
 		}
 
 		shipperRepository.save(shipper);
+	}
+
+	// ShipmentService.java - Thêm method mới
+	public List<Shipper> getAllShippers() {
+		return shipperRepository.findAll();
 	}
 
 	public Shipper getShipperById(Long id) {

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Đơn hàng chờ xử lý</title>
+    <link rel="stylesheet" th:href="@{/css/warehouse.css}">
+</head>
+
+<body>
+    <div th:replace="~{fragments/warehouse-header :: header}"></div>
+    <div class="container">
+        <h1>Đơn hàng chờ xử lý</h1>
+
+        <div class="section">
+            <h2>Đơn hàng từ khách chờ tiếp nhận</h2>
+            <div th:if="${success}" class="alert success" th:text="${success}"></div>
+            <div th:if="${error}" class="alert error" th:text="${error}"></div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Khách hàng</th>
+                        <th>SĐT</th>
+                        <th>Người gửi</th>
+                        <th>Người nhận</th>
+                        <th>Kho gửi</th>
+                        <th>Kho đích</th>
+                        <th>Phí dự kiến</th>
+                        <th>Ngày tạo</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="co : ${customerOrders}">
+                        <td th:text="${co.customerName}"></td>
+                        <td th:text="${co.customerPhone}"></td>
+                        <td th:text="${co.senderName}"></td>
+                        <td th:text="${co.recipientName}"></td>
+                        <td th:text="${co.fromWarehouseCode}"></td>
+                        <td th:text="${co.toWarehouseCode}"></td>
+                        <td th:text="${#numbers.formatDecimal(co.estimatedFee, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
+                        <td th:text="${#temporals.format(co.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+                        <td>
+                            <form th:action="@{/warehouse/orders/accept-customer-order/{id}(id=${co.id})}" method="post"
+                                onsubmit="return confirm('Tiếp nhận đơn hàng này?');">
+                                <button type="submit" class="btn-sm">Tiếp nhận</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${customerOrders.isEmpty()}">
+                        <td colspan="9" style="text-align: center;">Không có đơn hàng nào</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>Đơn hàng chờ xác nhận kiện</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Mã đơn</th>
+                        <th>Người gửi</th>
+                        <th>Người nhận</th>
+                        <th>Kho đích</th>
+                        <th>Ngày tạo</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="order : ${unconfirmedOrders}">
+                        <td th:text="${order.orderCode}"></td>
+                        <td th:text="${order.senderName}"></td>
+                        <td th:text="${order.recipientName}"></td>
+                        <td th:text="${order.destinationWarehouse.name}"></td>
+                        <td th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+                        <td>
+                            <a th:href="@{/warehouse/orders/{id}/confirm-packages(id=${order.id})}" class="btn-sm">Xác
+                                nhận kiện</a>
+                        </td>
+                    </tr>
+                    <tr th:if="${unconfirmedOrders.isEmpty()}">
+                        <td colspan="6" style="text-align: center;">Không có đơn hàng nào</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+
+</html>
