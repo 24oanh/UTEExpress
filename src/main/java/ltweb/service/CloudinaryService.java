@@ -29,18 +29,19 @@ public class CloudinaryService {
         String fileExtension = originalFilename != null && originalFilename.contains(".")
                 ? originalFilename.substring(originalFilename.lastIndexOf("."))
                 : "";
-        
+
         String publicId = folder + "/" + UUID.randomUUID().toString() + fileExtension;
 
         Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
                 ObjectUtils.asMap(
                         "public_id", publicId,
                         "resource_type", "auto",
-                        "folder", folder
-                ));
+                        "folder", folder));
 
         return (String) uploadResult.get("secure_url");
     }
+
+    // CloudinaryService.java - Sửa method uploadProofImage
 
     public String uploadProofImage(MultipartFile file, String shipmentCode) throws IOException {
         if (file == null || file.isEmpty()) {
@@ -53,14 +54,7 @@ public class CloudinaryService {
                 ObjectUtils.asMap(
                         "public_id", publicId,
                         "resource_type", "image",
-                        "folder", folder + "/proofs",
-                        "transformation", ObjectUtils.asMap(
-                                "width", 800,
-                                "height", 600,
-                                "crop", "limit",
-                                "quality", "auto"
-                        )
-                ));
+                        "folder", folder + "/proofs"));
 
         return (String) uploadResult.get("secure_url");
     }
@@ -73,17 +67,17 @@ public class CloudinaryService {
         if (imageUrl == null || imageUrl.isEmpty()) {
             return null;
         }
-        
+
         int startIndex = imageUrl.indexOf(folder);
         if (startIndex == -1) {
             return null;
         }
-        
+
         int endIndex = imageUrl.lastIndexOf(".");
         if (endIndex == -1) {
             endIndex = imageUrl.length();
         }
-        
+
         return imageUrl.substring(startIndex, endIndex);
     }
 

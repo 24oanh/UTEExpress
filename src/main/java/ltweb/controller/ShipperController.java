@@ -2,13 +2,8 @@ package ltweb.controller;
 
 import ltweb.entity.*;
 import ltweb.entity.Package;
-import ltweb.repository.ShipmentLegRepository;
-import ltweb.service.AuthService;
-import ltweb.service.OrderService;
-import ltweb.service.ShipmentLegService;
-import ltweb.service.ShipmentService;
-import ltweb.service.CloudinaryService;
-import ltweb.service.NotificationService;
+import ltweb.repository.*;
+import ltweb.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -36,6 +31,10 @@ public class ShipperController {
 	private final NotificationService notificationService;
 	private final ShipmentLegRepository shipmentLegRepository;
 	private final ShipmentLegService shipmentLegService;
+	private final OrderRepository orderRepository;
+	private final ShipmentRepository shipmentRepository;
+	private final PackageRepository packageRepository;
+	private final ShipperRepository shipperRepository;
 
 	@GetMapping("/dashboard")
 	public String dashboard(Model model, Authentication auth, HttpSession session) {
@@ -83,6 +82,219 @@ public class ShipperController {
 		model.addAttribute("packages", packages);
 		model.addAttribute("shipment", shipment);
 		return "shipper/order-detail";
+	}
+
+	// ShipperController.java - Sửa method startOrder
+
+	@PostMapping("/orders/{id}/start")
+	public String startOrder(@PathVariable Long id, RedirectAttributes redirectAttributes, HttpSession session) {
+		try {
+			Order order = orderService.getOrderById(id);
+			Shipper shipper = (Shipper) session.getAttribute("currentShipper");
+
+			if (!order.getShipper().getId().equals(shipper.getId())) {
+				throw new RuntimeException("Bạn không được phân công đơn này");
+			}
+
+			if (order.getStatus() != OrderStatus.CHO_GIAO) {
+				throw new RuntimeException("Đơn hàng không ở trạng thái chờ giao");
+			}
+
+			// Tìm hoặc tạo shipment
+			Shipment shipment = shipmentRepository.findByOrderId(id).orElse(null);
+			if (shipment == null) {
+				shipment = Shipment.builder()
+						.shipmentCode("SH" + System.currentTimeMillis())
+						.order(order)
+						.shipper(shipper)
+						.status(ShipmentStatus.PENDING)
+						.build();
+				shipment = shipmentRepository.save(shipment);
+
+				// Tạo legs nếu chưa có
+				shipmentLegService.createShipmentLegs(shipment, order);
+			}
+
+			// Bắt đầu shipment
+			shipment.setStatus(ShipmentStatus.IN_TRANSIT);
+			shipment.setPickupTime(LocalDateTime.now());
+			shipmentRepository.save(shipment);
+
+			// Cập nhật order
+			order.setStatus(OrderStatus.DANG_GIAO);
+			orderRepository.save(order);
+
+			// Bắt đầu chặng đầu tiên
+			ShipmentLeg firstLeg = shipmentLegRepository
+					.findFirstByShipmentIdAndStatusOrderByLegSequence(shipment.getId(), ShipmentStatus.PENDING)
+					.orElse(null);
+
+			if (firstLeg != null) {
+				firstLeg.setStatus(ShipmentStatus.IN_TRANSIT);
+				firstLeg.setPickupTime(LocalDateTime.now());
+				shipmentLegRepository.save(firstLeg);
+			}
+
+			redirectAttributes.addFlashAttribute("success", "Đã bắt đầu giao hàng");
+		} catch (Exception e) {
+			redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+			e.printStackTrace();
+		}
+		return "redirect:/shipper/orders/" + id;
+	}
+
+	@PostMapping("/orders/{id}/complete")
+	public String completeOrder(@PathVariable Long id,
+			@RequestParam(required = false) MultipartFile proofImage,
+			@RequestParam(required = false) String notes,
+			RedirectAttributes redirectAttributes,
+			HttpSession session) {
+		try {
+			Order order = orderService.getOrderById(id);
+			Shipper shipper = (Shipper) session.getAttribute("currentShipper");
+
+			if (!order.getShipper().getId().equals(shipper.getId())) {
+				throw new RuntimeException("Bạn không được phân công đơn này");
+			}
+
+			if (order.getStatus() != OrderStatus.DANG_GIAO) {
+				throw new RuntimeException("Đơn hàng không ở trạng thái đang giao");
+			}
+
+			Shipment shipment = shipmentRepository.findByOrderId(id).orElse(null);
+			if (shipment == null) {
+				throw new RuntimeException("Không tìm thấy shipment");
+			}
+
+			// Upload ảnh chứng từ
+			if (proofImage != null && !proofImage.isEmpty()) {
+				String imageUrl = cloudinaryService.uploadProofImage(proofImage, shipment.getShipmentCode());
+				shipment.setProofImageUrl(imageUrl);
+			}
+
+			// Cập nhật ghi chú
+			if (notes != null && !notes.isEmpty()) {
+				shipment.setNotes(notes);
+			}
+
+			// Hoàn thành shipment
+			shipment.setStatus(ShipmentStatus.DELIVERED);
+			shipment.setDeliveryTime(LocalDateTime.now());
+			shipmentRepository.save(shipment);
+
+			// Hoàn thành order
+			order.setStatus(OrderStatus.HOAN_THANH);
+			orderRepository.save(order);
+
+			// Hoàn thành chặng cuối
+			ShipmentLeg lastLeg = shipmentLegRepository
+					.findFirstByShipmentIdAndStatusOrderByLegSequence(shipment.getId(), ShipmentStatus.IN_TRANSIT)
+					.orElse(null);
+
+			if (lastLeg != null) {
+				lastLeg.setStatus(ShipmentStatus.DELIVERED);
+				lastLeg.setDeliveryTime(LocalDateTime.now());
+				if (proofImage != null && !proofImage.isEmpty()) {
+					lastLeg.setNotes("Đã giao thành công");
+				}
+				shipmentLegRepository.save(lastLeg);
+			}
+
+			// Cập nhật packages
+			List<Package> packages = packageRepository.findByOrderId(id);
+			for (Package pkg : packages) {
+				pkg.setStatus(PackageStatus.DA_GIAO);
+				packageRepository.save(pkg);
+			}
+
+			// Cập nhật thống kê shipper
+			shipper.setTotalDeliveries(shipper.getTotalDeliveries() + 1);
+			shipper.setSuccessfulDeliveries(shipper.getSuccessfulDeliveries() + 1);
+			shipperRepository.save(shipper);
+
+			// Thông báo kho
+			notificationService.createNotification("WAREHOUSE", order.getWarehouse().getId(),
+					"Đơn hàng " + order.getOrderCode() + " đã giao thành công",
+					NotificationType.DELIVERY_COMPLETED, order);
+
+			if (order.getDestinationWarehouse() != null) {
+				notificationService.createNotification("WAREHOUSE", order.getDestinationWarehouse().getId(),
+						"Đơn hàng " + order.getOrderCode() + " đã được giao đến khách hàng",
+						NotificationType.DELIVERY_COMPLETED, order);
+			}
+
+			redirectAttributes.addFlashAttribute("success", "Đã hoàn thành giao hàng");
+		} catch (Exception e) {
+			redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+			e.printStackTrace();
+		}
+		return "redirect:/shipper/orders/" + id;
+	}
+
+	@PostMapping("/orders/{id}/fail")
+	public String failOrder(@PathVariable Long id,
+			@RequestParam String notes,
+			RedirectAttributes redirectAttributes,
+			HttpSession session) {
+		try {
+			if (notes == null || notes.trim().isEmpty()) {
+				throw new RuntimeException("Vui lòng nhập lý do thất bại");
+			}
+
+			Order order = orderService.getOrderById(id);
+			Shipper shipper = (Shipper) session.getAttribute("currentShipper");
+
+			if (!order.getShipper().getId().equals(shipper.getId())) {
+				throw new RuntimeException("Bạn không được phân công đơn này");
+			}
+
+			Shipment shipment = shipmentRepository.findByOrderId(id).orElse(null);
+			if (shipment == null) {
+				throw new RuntimeException("Không tìm thấy shipment");
+			}
+
+			// Cập nhật shipment
+			shipment.setStatus(ShipmentStatus.FAILED);
+			shipment.setNotes(notes);
+			shipmentRepository.save(shipment);
+
+			// Cập nhật order
+			order.setStatus(OrderStatus.THAT_BAI);
+			orderRepository.save(order);
+
+			// Cập nhật chặng hiện tại
+			ShipmentLeg currentLeg = shipmentLegRepository
+					.findFirstByShipmentIdAndStatusOrderByLegSequence(shipment.getId(), ShipmentStatus.IN_TRANSIT)
+					.orElse(null);
+
+			if (currentLeg != null) {
+				currentLeg.setStatus(ShipmentStatus.FAILED);
+				currentLeg.setNotes(notes);
+				shipmentLegRepository.save(currentLeg);
+			}
+
+			// Cập nhật thống kê shipper
+			shipper.setTotalDeliveries(shipper.getTotalDeliveries() + 1);
+			shipper.setFailedDeliveries(shipper.getFailedDeliveries() + 1);
+			shipperRepository.save(shipper);
+
+			// Thông báo kho
+			notificationService.createNotification("WAREHOUSE", order.getWarehouse().getId(),
+					"Đơn hàng " + order.getOrderCode() + " giao thất bại: " + notes,
+					NotificationType.ORDER_FAILED, order);
+
+			if (order.getDestinationWarehouse() != null) {
+				notificationService.createNotification("WAREHOUSE", order.getDestinationWarehouse().getId(),
+						"Đơn hàng " + order.getOrderCode() + " giao thất bại",
+						NotificationType.ORDER_FAILED, order);
+			}
+
+			redirectAttributes.addFlashAttribute("success", "Đã đánh dấu giao hàng thất bại");
+		} catch (Exception e) {
+			redirectAttributes.addFlashAttribute("error", "Lỗi: " + e.getMessage());
+			e.printStackTrace();
+		}
+		return "redirect:/shipper/orders/" + id;
 	}
 
 	@GetMapping("/shipments")

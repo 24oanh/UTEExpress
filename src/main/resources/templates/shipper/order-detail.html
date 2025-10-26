@@ -1,10 +1,13 @@
+<!-- shipper/order-detail.html - Thay thế toàn bộ -->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head>
-<meta charset="UTF-8">
-<title>Chi tiết đơn hàng</title>
-<link rel="stylesheet" th:href="@{/css/shipper.css}">
+	<meta charset="UTF-8">
+	<title>Chi tiết đơn hàng</title>
+	<link rel="stylesheet" th:href="@{/css/shipper.css}">
 </head>
+
 <body>
 	<div th:replace="~{fragments/shipper-header :: header}"></div>
 	<div class="container">
@@ -13,54 +16,45 @@
 			<a th:href="@{/shipper/orders}" class="btn-secondary">Quay lại</a>
 		</div>
 
+		<div th:if="${success}" class="alert success" th:text="${success}"></div>
+		<div th:if="${error}" class="alert error" th:text="${error}"></div>
+
+		<div class="shipment-status-card">
+			<h2>Đơn hàng: <span th:text="${order.orderCode}"></span></h2>
+			<p class="status-large">
+				<span th:class="'badge badge-' + ${order.status} + ' badge-lg'" th:text="${order.status}"></span>
+			</p>
+		</div>
+
 		<div class="detail-grid">
 			<div class="detail-card">
 				<h3>Thông tin đơn</h3>
-				<p>
-					<strong>Mã đơn:</strong> <span th:text="${order.orderCode}"></span>
-				</p>
-				<p>
-					<strong>Trạng thái:</strong> <span
-						th:class="'badge badge-' + ${order.status}"
-						th:text="${order.status}"></span>
-				</p>
-				<p>
-					<strong>Phí vận chuyển:</strong> <span
+				<p><strong>Mã đơn:</strong> <span th:text="${order.orderCode}"></span></p>
+				<p><strong>Trạng thái:</strong> <span th:class="'badge badge-' + ${order.status}"
+						th:text="${order.status}"></span></p>
+				<p><strong>Phí vận chuyển:</strong> <span
 						th:text="${#numbers.formatDecimal(order.shipmentFee, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
 				</p>
-				<p>
-					<strong>Ghi chú:</strong> <span th:text="${order.notes ?: '-'}"></span>
-				</p>
+				<p><strong>Ngày tạo:</strong> <span
+						th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></span></p>
+				<p th:if="${order.notes}"><strong>Ghi chú:</strong> <span th:text="${order.notes}"></span></p>
 			</div>
 
 			<div class="detail-card">
 				<h3>Người gửi</h3>
-				<p>
-					<strong>Tên:</strong> <span th:text="${order.senderName}"></span>
+				<p><strong>Tên:</strong> <span th:text="${order.senderName}"></span></p>
+				<p><strong>SĐT:</strong> <a th:href="'tel:' + ${order.senderPhone}" th:text="${order.senderPhone}"></a>
 				</p>
-				<p>
-					<strong>SĐT:</strong> <a th:href="'tel:' + ${order.senderPhone}"
-						th:text="${order.senderPhone}"></a>
-				</p>
-				<p>
-					<strong>Địa chỉ:</strong> <span th:text="${order.senderAddress}"></span>
-				</p>
+				<p><strong>Địa chỉ:</strong> <span th:text="${order.senderAddress}"></span></p>
 			</div>
 
 			<div class="detail-card">
 				<h3>Người nhận</h3>
-				<p>
-					<strong>Tên:</strong> <span th:text="${order.recipientName}"></span>
-				</p>
-				<p>
-					<strong>SĐT:</strong> <a th:href="'tel:' + ${order.recipientPhone}"
-						th:text="${order.recipientPhone}"></a>
-				</p>
-				<p>
-					<strong>Địa chỉ:</strong> <span th:text="${order.recipientAddress}"></span>
-				</p>
-				<button onclick="openMap()" class="btn-primary mt-2">Mở bản
-					đồ</button>
+				<p><strong>Tên:</strong> <span th:text="${order.recipientName}"></span></p>
+				<p><strong>SĐT:</strong> <a th:href="'tel:' + ${order.recipientPhone}"
+						th:text="${order.recipientPhone}"></a></p>
+				<p><strong>Địa chỉ:</strong> <span th:text="${order.recipientAddress}"></span></p>
+				<button onclick="openMap()" class="btn-primary mt-2">Mở bản đồ</button>
 			</div>
 		</div>
 
@@ -73,6 +67,7 @@
 						<th>Mô tả</th>
 						<th>Trọng lượng</th>
 						<th>Kích thước</th>
+						<th>Số lượng</th>
 						<th>Trạng thái</th>
 					</tr>
 				</thead>
@@ -81,10 +76,9 @@
 						<td th:text="${pkg.packageCode}"></td>
 						<td th:text="${pkg.description}"></td>
 						<td th:text="${pkg.weight} + ' kg'"></td>
-						<td
-							th:text="${pkg.length} + 'x' + ${pkg.width} + 'x' + ${pkg.height} + ' cm'"></td>
-						<td><span th:class="'badge badge-' + ${pkg.status}"
-							th:text="${pkg.status}"></span></td>
+						<td th:text="${pkg.length} + 'x' + ${pkg.width} + 'x' + ${pkg.height} + ' cm'"></td>
+						<td th:text="${pkg.unitQuantity}"></td>
+						<td><span th:class="'badge badge-' + ${pkg.status}" th:text="${pkg.status}"></span></td>
 					</tr>
 				</tbody>
 			</table>
@@ -92,33 +86,103 @@
 
 		<div class="section" th:if="${shipment != null}">
 			<h3>Thông tin giao hàng</h3>
-			<p>
-				<strong>Mã giao hàng:</strong> <span
-					th:text="${shipment.shipmentCode}"></span>
-			</p>
-			<p>
-				<strong>Trạng thái:</strong> <span
-					th:class="'badge badge-' + ${shipment.status}"
-					th:text="${shipment.status}"></span>
-			</p>
-			<p th:if="${shipment.pickupTime}">
-				<strong>Thời gian lấy:</strong> <span
-					th:text="${#temporals.format(shipment.pickupTime, 'dd/MM/yyyy HH:mm')}"></span>
-			</p>
-			<p th:if="${shipment.deliveryTime}">
-				<strong>Thời gian giao:</strong> <span
-					th:text="${#temporals.format(shipment.deliveryTime, 'dd/MM/yyyy HH:mm')}"></span>
-			</p>
-			<p th:if="${shipment.notes}">
-				<strong>Ghi chú:</strong> <span th:text="${shipment.notes}"></span>
+			<p><strong>Mã giao hàng:</strong> <span th:text="${shipment.shipmentCode}"></span></p>
+			<p><strong>Trạng thái:</strong> <span th:class="'badge badge-' + ${shipment.status}"
+					th:text="${shipment.status}"></span></p>
+			<p th:if="${shipment.pickupTime}"><strong>Thời gian lấy:</strong> <span
+					th:text="${#temporals.format(shipment.pickupTime, 'dd/MM/yyyy HH:mm')}"></span></p>
+			<p th:if="${shipment.deliveryTime}"><strong>Thời gian giao:</strong> <span
+					th:text="${#temporals.format(shipment.deliveryTime, 'dd/MM/yyyy HH:mm')}"></span></p>
+			<p th:if="${shipment.notes}"><strong>Ghi chú:</strong> <span th:text="${shipment.notes}"></span></p>
+			<p th:if="${shipment.proofImageUrl}">
+				<strong>Ảnh chứng từ:</strong><br>
+				<img th:src="${shipment.proofImageUrl}" alt="Proof"
+					style="max-width: 300px; margin-top: 10px; border-radius: 8px;">
 			</p>
 		</div>
+
+		<!-- Action: Bắt đầu giao hàng -->
+		<div class="action-section" th:if="${order.status == T(ltweb.entity.OrderStatus).CHO_GIAO}">
+			<h3>Bắt đầu giao hàng</h3>
+			<form th:action="@{/shipper/orders/{id}/start(id=${order.id})}" method="post">
+				<p>Xác nhận đã lấy hàng và bắt đầu giao?</p>
+				<button type="submit" class="btn-primary btn-lg">Bắt đầu giao hàng</button>
+			</form>
+		</div>
+
+		<!-- Action: Hoàn thành giao hàng -->
+		<div class="action-section" th:if="${order.status == T(ltweb.entity.OrderStatus).DANG_GIAO}">
+			<h3>Hoàn thành giao hàng</h3>
+			<form th:action="@{/shipper/orders/{id}/complete(id=${order.id})}" method="post"
+				enctype="multipart/form-data" class="action-form">
+				<div class="form-group">
+					<label>Ảnh chứng từ giao hàng *</label>
+					<input type="file" name="proofImage" accept="image/*" capture="camera" required>
+					<small style="color: #7f8c8d;">Chụp ảnh xác nhận đã giao hàng</small>
+				</div>
+				<div class="form-group">
+					<label>Ghi chú</label>
+					<textarea name="notes" rows="3" placeholder="Ghi chú về việc giao hàng..."></textarea>
+				</div>
+				<button type="submit" class="btn-success btn-lg"
+					onclick="return confirm('Xác nhận đã giao hàng thành công?')">Hoàn thành giao hàng</button>
+			</form>
+
+			<h3 class="mt-4" style="color: #e74c3c;">Giao hàng thất bại</h3>
+			<form th:action="@{/shipper/orders/{id}/fail(id=${order.id})}" method="post" class="action-form">
+				<div class="form-group">
+					<label>Lý do thất bại *</label>
+					<textarea name="notes" rows="3" required
+						placeholder="Mô tả lý do không giao được hàng..."></textarea>
+				</div>
+				<button type="submit" class="btn-danger btn-lg"
+					onclick="return confirm('Xác nhận giao hàng thất bại?')">Đánh dấu thất bại</button>
+			</form>
+		</div>
+
+		<!-- Cập nhật vị trí -->
+		<div class="section" th:if="${order.status == T(ltweb.entity.OrderStatus).DANG_GIAO}">
+			<h3>Cập nhật vị trí</h3>
+			<button onclick="updateLocation()" class="btn-primary">Cập nhật vị trí hiện tại</button>
+			<div id="location-status" class="mt-2"></div>
+		</div>
 	</div>
-	<script>
-        function openMap() {
-            const address = "[[${order.recipientAddress}]]";
-            window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`, '_blank');
-        }
-    </script>
+
+	<script th:inline="javascript">
+		const address = /*[[${order.recipientAddress}]]*/ '';
+
+		function openMap() {
+			window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`, '_blank');
+		}
+
+		function updateLocation() {
+			if (navigator.geolocation) {
+				navigator.geolocation.getCurrentPosition(function (position) {
+					const data = new FormData();
+					data.append('latitude', position.coords.latitude);
+					data.append('longitude', position.coords.longitude);
+
+					fetch('/shipper/location/update', {
+						method: 'POST',
+						body: data
+					})
+						.then(response => response.text())
+						.then(result => {
+							document.getElementById('location-status').innerHTML =
+								'<span style="color: #27ae60;">✓ Đã cập nhật vị trí</span>';
+						})
+						.catch(error => {
+							document.getElementById('location-status').innerHTML =
+								'<span style="color: #e74c3c;">✗ Lỗi cập nhật</span>';
+						});
+				}, function (error) {
+					alert('Không thể lấy vị trí: ' + error.message);
+				});
+			} else {
+				alert('Trình duyệt không hỗ trợ định vị');
+			}
+		}
+	</script>
 </body>
+
 </html>
