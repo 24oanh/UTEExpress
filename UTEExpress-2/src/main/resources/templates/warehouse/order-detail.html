@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Chi tiết đơn hàng</title>
+<link rel="stylesheet" th:href="@{/css/warehouse.css}">
+</head>
+<body>
+	<div th:replace="~{fragments/warehouse-header :: header}"></div>
+	<div class="container">
+		<div class="page-header">
+			<h1>Chi tiết đơn hàng</h1>
+			<div>
+				<a th:href="@{/warehouse/orders/{id}/edit(id=${order.id})}"
+					class="btn-secondary">Sửa</a> <a th:href="@{/warehouse/orders}"
+					class="btn-secondary">Quay lại</a>
+			</div>
+		</div>
+		<div th:if="${success}" class="alert success" th:text="${success}"></div>
+		<div th:if="${error}" class="alert error" th:text="${error}"></div>
+
+		<div class="detail-grid">
+			<div class="detail-card">
+				<h3>Thông tin đơn hàng</h3>
+				<p>
+					<strong>Mã đơn:</strong> <span th:text="${order.orderCode}"></span>
+				</p>
+				<p>
+					<strong>Trạng thái:</strong> <span
+						th:class="'badge badge-' + ${order.status}"
+						th:text="${order.status}"></span>
+				</p>
+				<p>
+					<strong>Phí vận chuyển:</strong> <span
+						th:text="${#numbers.formatDecimal(order.shipmentFee, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+				</p>
+				<p>
+					<strong>Ghi chú:</strong> <span th:text="${order.notes}"></span>
+				</p>
+			</div>
+
+			<div class="detail-card">
+				<h3>Thông tin kho</h3>
+				<p>
+					<strong>Kho xuất:</strong> <span
+						th:text="${order.warehouse != null ? order.warehouse.name + ' (' + order.warehouse.code + ')' : '-'}"></span>
+				</p>
+				<p>
+					<strong>Kho đích:</strong> <span
+						th:text="${order.destinationWarehouse != null ? order.destinationWarehouse.name + ' (' + order.destinationWarehouse.code + ')' : '-'}"></span>
+				</p>
+			</div>
+
+			<div class="detail-card">
+				<h3>Người gửi</h3>
+				<p>
+					<strong>Tên:</strong> <span th:text="${order.senderName}"></span>
+				</p>
+				<p>
+					<strong>SĐT:</strong> <span th:text="${order.senderPhone}"></span>
+				</p>
+				<p>
+					<strong>Địa chỉ:</strong> <span th:text="${order.senderAddress}"></span>
+				</p>
+			</div>
+
+			<div class="detail-card">
+				<h3>Người nhận</h3>
+				<p>
+					<strong>Tên:</strong> <span th:text="${order.recipientName}"></span>
+				</p>
+				<p>
+					<strong>SĐT:</strong> <span th:text="${order.recipientPhone}"></span>
+				</p>
+				<p>
+					<strong>Địa chỉ:</strong> <span th:text="${order.recipientAddress}"></span>
+				</p>
+			</div>
+		</div>
+
+		<div class="section"
+			th:if="${shipmentLegs != null && !shipmentLegs.isEmpty()}">
+			<h3>Hành trình vận chuyển</h3>
+			<table>
+				<thead>
+					<tr>
+						<th>Chặng</th>
+						<th>Từ kho</th>
+						<th>Đến kho</th>
+						<th>Shipper</th>
+						<th>Khoảng cách (km)</th>
+						<th>Thời gian dự kiến (h)</th>
+						<th>Trạng thái</th>
+						<th>Chặng cuối</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:each="leg : ${shipmentLegs}">
+						<td th:text="${leg.legOrder}"></td>
+						<td
+							th:text="${leg.fromWarehouse.name + ' (' + leg.fromWarehouse.code + ')'}"></td>
+						<td
+							th:text="${leg.toWarehouse != null ? leg.toWarehouse.name + ' (' + leg.toWarehouse.code + ')' : 'Khách hàng'}"></td>
+						<td
+							th:text="${leg.shipper != null ? leg.shipper.name : 'Chưa phân'}"></td>
+						<td th:text="${leg.distanceKm}"></td>
+						<td th:text="${leg.estimatedHours}"></td>
+						<td><span th:class="'badge badge-' + ${leg.status}"
+							th:text="${leg.status}"></span></td>
+						<td><span
+							th:class="${leg.isFinalLeg ? 'badge badge-success' : 'badge badge-secondary'}"
+							th:text="${leg.isFinalLeg ? 'Cuối' : 'Trung gian'}"></span></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<div class="section"
+			th:if="${order.status == T(ltweb.entity.OrderStatus).CHO_GIAO && order.shipper == null}">
+			<h3>Phân công Shipper (Override)</h3>
+			<form
+				th:action="@{/warehouse/orders/{id}/assign-shipper(id=${order.id})}"
+				method="post" class="inline-form">
+				<select name="shipperId" required>
+					<option value="">-- Chọn Shipper --</option>
+					<option th:each="shipper : ${availableShippers}"
+						th:value="${shipper.id}"
+						th:text="${shipper.name + ' (' + shipper.code + ')'}"></option>
+				</select>
+				<button type="submit" class="btn-primary">Phân công</button>
+			</form>
+		</div>
+
+		<div class="section" th:if="${order.shipper != null}">
+			<h3>Shipper được phân công</h3>
+			<p>
+				<strong>Tên:</strong> <span th:text="${order.shipper.name}"></span>
+			</p>
+			<p>
+				<strong>Mã:</strong> <span th:text="${order.shipper.code}"></span>
+			</p>
+			<p>
+				<strong>SĐT:</strong> <span th:text="${order.shipper.phone}"></span>
+			</p>
+		</div>
+
+		<div class="section">
+			<h3>Danh sách kiện hàng</h3>
+			<a th:href="@{/warehouse/orders/{id}/packages/add(id=${order.id})}"
+				class="btn-secondary mb-3">Thêm kiện</a>
+			<table>
+				<thead>
+					<tr>
+						<th>Mã kiện</th>
+						<th>Mô tả</th>
+						<th>Trọng lượng (kg)</th>
+						<th>Kích thước (cm)</th>
+						<th>Trạng thái</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:each="pkg : ${packages}">
+						<td th:text="${pkg.packageCode}"></td>
+						<td th:text="${pkg.description}"></td>
+						<td th:text="${pkg.weight}"></td>
+						<td
+							th:text="${pkg.length} + ' x ' + ${pkg.width} + ' x ' + ${pkg.height}"></td>
+						<td><span th:class="'badge badge-' + ${pkg.status}"
+							th:text="${pkg.status}"></span></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<div class="section">
+			<h3>Cập nhật trạng thái</h3>
+			<form
+				th:action="@{/warehouse/orders/{id}/update-status(id=${order.id})}"
+				method="post" class="inline-form">
+				<select name="status" required>
+					<option value="CHO_GIAO">Chờ giao</option>
+					<option value="DANG_GIAO">Đang giao</option>
+					<option value="HOAN_THANH">Hoàn thành</option>
+					<option value="THAT_BAI">Thất bại</option>
+					<option value="HUY">Hủy</option>
+				</select>
+				<button type="submit" class="btn-primary">Cập nhật</button>
+			</form>
+		</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Báo cáo</title>
+<link rel="stylesheet" th:href="@{/css/warehouse.css}">
+</head>
+<body>
+	<div th:replace="~{fragments/warehouse-header :: header}"></div>
+	<div class="container">
+		<div class="page-header">
+			<h1>Báo cáo kho</h1>
+			<a th:href="@{/warehouse/reports/generate}" class="btn-primary">Tạo
+				báo cáo</a>
+		</div>
+
+		<div class="quick-actions mb-4">
+			<form th:action="@{/warehouse/reports/generate-daily}" method="post"
+				class="inline-form">
+				<input type="datetime-local" name="date" required>
+				<button type="submit" class="btn-secondary">BC Ngày</button>
+			</form>
+			<form th:action="@{/warehouse/reports/generate-weekly}" method="post"
+				class="inline-form">
+				<input type="datetime-local" name="weekStart" required>
+				<button type="submit" class="btn-secondary">BC Tuần</button>
+			</form>
+			<form th:action="@{/warehouse/reports/generate-monthly}"
+				method="post" class="inline-form">
+				<input type="datetime-local" name="month" required>
+				<button type="submit" class="btn-secondary">BC Tháng</button>
+			</form>
+		</div>
+
+		<table>
+			<thead>
+				<tr>
+					<th>Loại BC</th>
+					<th>Từ ngày</th>
+					<th>Đến ngày</th>
+					<th>Tồn đầu</th>
+					<th>Nhập</th>
+					<th>Xuất</th>
+					<th>Tồn cuối</th>
+					<th>Tỷ lệ SD (%)</th>
+					<th>Người tạo</th>
+					<th>Thao tác</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="report : ${reports}">
+					<td th:text="${report.reportType}"></td>
+					<td th:text="${#temporals.format(report.startDate, 'dd/MM/yyyy')}"></td>
+					<td th:text="${#temporals.format(report.endDate, 'dd/MM/yyyy')}"></td>
+					<td th:text="${report.openingStock}"></td>
+					<td th:text="${report.totalInboundQuantity}"></td>
+					<td th:text="${report.totalOutboundQuantity}"></td>
+					<td th:text="${report.closingStock}"></td>
+					<td
+						th:text="${#numbers.formatDecimal(report.utilizationRate, 1, 2)}"></td>
+					<td th:text="${report.createdBy.fullName}"></td>
+					<td><a th:href="@{/warehouse/reports/{id}(id=${report.id})}"
+						class="btn-sm">Xem</a>
+						<form
+							th:action="@{/warehouse/reports/{id}/delete(id=${report.id})}"
+							method="post" style="display: inline">
+							<button type="submit" class="btn-sm btn-danger"
+								onclick="return confirm('Xóa báo cáo?')">Xóa</button>
+						</form></td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</body>
+</html>

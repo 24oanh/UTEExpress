@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lịch sử đơn hàng - UTEExpress</title>
+<link
+	href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+	rel="stylesheet">
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+.filter-card {
+	background: #fff;
+	border-radius: 10px;
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+	padding: 20px;
+	margin-bottom: 20px;
+}
+
+.order-card {
+	background: #fff;
+	border-radius: 10px;
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+	padding: 20px;
+	margin-bottom: 15px;
+	transition: transform 0.2s;
+	cursor: pointer;
+}
+
+.order-card:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.status-badge {
+	padding: 5px 12px;
+	border-radius: 20px;
+	font-size: 0.85rem;
+	font-weight: 600;
+}
+
+.timeline {
+	position: relative;
+	padding-left: 30px;
+}
+
+.timeline::before {
+	content: '';
+	position: absolute;
+	left: 8px;
+	top: 0;
+	bottom: 0;
+	width: 2px;
+	background: #e0e0e0;
+}
+
+.timeline-item {
+	position: relative;
+	padding-bottom: 20px;
+}
+
+.timeline-item::before {
+	content: '';
+	position: absolute;
+	left: -26px;
+	top: 0;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	background: #3498db;
+	border: 3px solid #fff;
+	box-shadow: 0 0 0 2px #3498db;
+}
+
+.timeline-item.completed::before {
+	background: #27ae60;
+	box-shadow: 0 0 0 2px #27ae60;
+}
+
+.order-detail-modal {
+	display: none;
+}
+
+.order-detail-modal.show {
+	display: block;
+}
+</style>
+</head>
+<body>
+	<div th:replace="~{customer/layout :: header}"></div>
+
+	<div class="container mt-4 mb-5">
+		<h2 class="mb-4">
+			<i class="fas fa-history"></i> Lịch sử đơn hàng
+		</h2>
+
+		<!-- Bộ lọc -->
+		<div class="filter-card">
+			<form id="filterForm">
+				<div class="row">
+					<div class="col-md-3 mb-3">
+						<label class="form-label">Từ ngày</label> <input type="date"
+							class="form-control" id="startDate" name="startDate">
+					</div>
+					<div class="col-md-3 mb-3">
+						<label class="form-label">Đến ngày</label> <input type="date"
+							class="form-control" id="endDate" name="endDate">
+					</div>
+					<div class="col-md-3 mb-3">
+						<label class="form-label">Trạng thái</label> <select
+							class="form-select" id="status" name="status">
+							<option value="">Tất cả</option>
+							<option value="CHO_GIAO">Chờ giao</option>
+							<option value="DANG_GIAO">Đang giao</option>
+							<option value="HOAN_THANH">Hoàn thành</option>
+							<option value="THAT_BAI">Thất bại</option>
+							<option value="HUY">Đã hủy</option>
+						</select>
+					</div>
+					<div class="col-md-3 mb-3">
+						<label class="form-label">Tìm mã vận đơn</label> <input
+							type="text" class="form-control" id="orderCode" name="orderCode"
+							placeholder="Nhập mã...">
+					</div>
+				</div>
+				<div class="text-end">
+					<button type="submit" class="btn btn-primary">
+						<i class="fas fa-filter"></i> Lọc
+					</button>
+					<button type="button" class="btn btn-secondary"
+						onclick="resetFilter()">
+						<i class="fas fa-redo"></i> Đặt lại
+					</button>
+				</div>
+			</form>
+		</div>
+
+		<!-- Thống kê nhanh -->
+		<div class="row mb-4">
+			<div class="col-md-3">
+				<div class="card text-white bg-primary">
+					<div class="card-body">
+						<h6>Tổng đơn hàng</h6>
+						<h3 id="totalOrders">0</h3>
+					</div>
+				</div>
+			</div>
+			<div class="col-md-3">
+				<div class="card text-white bg-warning">
+					<div class="card-body">
+						<h6>Đang giao</h6>
+						<h3 id="inTransitOrders">0</h3>
+					</div>
+				</div>
+			</div>
+			<div class="col-md-3">
+				<div class="card text-white bg-success">
+					<div class="card-body">
+						<h6>Hoàn thành</h6>
+						<h3 id="completedOrders">0</h3>
+					</div>
+				</div>
+			</div>
+			<div class="col-md-3">
+				<div class="card text-white bg-danger">
+					<div class="card-body">
+						<h6>Thất bại</h6>
+						<h3 id="failedOrders">0</h3>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Danh sách đơn hàng -->
+		<div id="orderList">
+			<div th:if="${orders.empty}" class="alert alert-info text-center">
+				<i class="fas fa-inbox fa-3x mb-3"></i>
+				<p>Chưa có đơn hàng nào</p>
+			</div>
+
+			<div class="order-card" th:each="order : ${orders}"
+				th:onclick="'showOrderDetail(' + ${order.id} + ')'">
+				<div class="row align-items-center">
+					<div class="col-md-2">
+						<div class="text-center">
+							<i class="fas fa-box fa-2x text-primary mb-2"></i>
+							<p class="mb-0 small">
+								<strong th:text="${order.orderCode}"></strong>
+							</p>
+						</div>
+					</div>
+					<div class="col-md-3">
+						<p class="mb-1">
+							<strong>Ngày tạo:</strong>
+						</p>
+						<p class="mb-0 text-muted"
+							th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></p>
+					</div>
+					<div class="col-md-2">
+						<p class="mb-1">
+							<strong>Dịch vụ:</strong>
+						</p>
+						<p class="mb-0"
+							th:text="${order.serviceType == T(ltweb.entity.ServiceType).EXPRESS ? 'Nhanh' : (order.serviceType == T(ltweb.entity.ServiceType).STANDARD ? 'Chuẩn' : 'Tiết kiệm')}"></p>
+					</div>
+					<div class="col-md-2">
+						<p class="mb-1">
+							<strong>Phí vận chuyển:</strong>
+						</p>
+						<p class="mb-0 text-danger fw-bold"
+							th:text="${#numbers.formatDecimal(order.shipmentFee, 0, 'COMMA', 0, 'POINT')} + ' đ'"></p>
+					</div>
+					<div class="col-md-2">
+						<p class="mb-1">
+							<strong>Người nhận:</strong>
+						</p>
+						<p class="mb-0" th:text="${order.recipientName}"></p>
+					</div>
+					<div class="col-md-1 text-end">
+						<span class="status-badge"
+							th:classappend="${order.status.name() == 'CHO_GIAO' ? 'bg-warning' : 
+                                             (order.status.name() == 'DANG_GIAO' ? 'bg-info' : 
+                                             (order.status.name() == 'HOAN_THANH' ? 'bg-success' : 
+                                             (order.status.name() == 'HUY' ? 'bg-secondary' : 'bg-danger')))}"
+							th:text="${order.status.name() == 'CHO_GIAO' ? 'Chờ giao' : 
+                                      (order.status.name() == 'DANG_GIAO' ? 'Đang giao' : 
+                                      (order.status.name() == 'HOAN_THANH' ? 'Hoàn thành' : 
+                                      (order.status.name() == 'HUY' ? 'Đã hủy' : 'Thất bại')))}">
+						</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Modal chi tiết đơn hàng -->
+	<div class="modal fade" id="orderDetailModal" tabindex="-1">
+		<div class="modal-dialog modal-lg">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title">
+						<i class="fas fa-file-alt"></i> Chi tiết đơn hàng
+					</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+				<div class="modal-body" id="orderDetailContent">
+					<div class="text-center py-5">
+						<div class="spinner-border text-primary" role="status">
+							<span class="visually-hidden">Loading...</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script
+		src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+	<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const orders = /*[[${orders}]]*/ [];
+    updateStatistics(orders);
+});
+
+function updateStatistics(orders) {
+    document.getElementById('totalOrders').textContent = orders.length;
+    document.getElementById('inTransitOrders').textContent = orders.filter(o => o.status === 'DANG_GIAO').length;
+    document.getElementById('completedOrders').textContent = orders.filter(o => o.status === 'HOAN_THANH').length;
+    document.getElementById('failedOrders').textContent = orders.filter(o => o.status === 'THAT_BAI' || o.status === 'HUY').length;
+}
+
+document.getElementById('filterForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const params = new URLSearchParams(formData);
+    window.location.href = '/customer/orders/history?' + params.toString();
+});
+
+function resetFilter() {
+    window.location.href = '/customer/orders/history';
+}
+
+function showOrderDetail(orderId) {
+    const modal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
+    modal.show();
+    
+    fetch('/customer/orders/' + orderId + '/detail-ajax')
+        .then(response => response.json())
+        .then(data => {
+            renderOrderDetail(data);
+        })
+        .catch(error => {
+            document.getElementById('orderDetailContent').innerHTML = 
+                '<div class="alert alert-danger">Không thể tải thông tin đơn hàng</div>';
+        });
+}
+
+function renderOrderDetail(data) {
+    const statusText = {
+        'CHO_GIAO': 'Chờ giao',
+        'DANG_GIAO': 'Đang giao',
+        'HOAN_THANH': 'Hoàn thành',
+        'THAT_BAI': 'Thất bại',
+        'HUY': 'Đã hủy'
+    };
+    
+    const statusClass = {
+        'CHO_GIAO': 'bg-warning',
+        'DANG_GIAO': 'bg-info',
+        'HOAN_THANH': 'bg-success',
+        'THAT_BAI': 'bg-danger',
+        'HUY': 'bg-secondary'
+    };
+    
+    let html = `
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h6><i class="fas fa-barcode"></i> Mã vận đơn</h6>
+                <p class="fw-bold">${data.orderCode}</p>
+            </div>
+            <div class="col-md-6 text-end">
+                <span class="status-badge ${statusClass[data.status]}">${statusText[data.status]}</span>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h6><i class="fas fa-user"></i> Người gửi</h6>
+                <p class="mb-1"><strong>${data.senderName}</strong></p>
+                <p class="mb-1">${data.senderPhone}</p>
+                <p class="mb-0 text-muted">${data.senderAddress}</p>
+            </div>
+            <div class="col-md-6">
+                <h6><i class="fas fa-user-check"></i> Người nhận</h6>
+                <p class="mb-1"><strong>${data.recipientName}</strong></p>
+                <p class="mb-1">${data.recipientPhone}</p>
+                <p class="mb-0 text-muted">${data.recipientAddress}</p>
+            </div>
+        </div>
+        
+        <div class="mb-4">
+            <h6><i class="fas fa-box"></i> Thông tin gói hàng</h6>
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th>Mô tả</th>
+                        <th>Trọng lượng</th>
+                        <th>Kích thước</th>
+                        <th>Số lượng</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+    
+    data.packages.forEach(pkg => {
+        html += `
+            <tr>
+                <td>${pkg.description}</td>
+                <td>${pkg.weight} kg</td>
+                <td>${pkg.length}x${pkg.width}x${pkg.height} cm</td>
+                <td>${pkg.unitQuantity}</td>
+            </tr>`;
+    });
+    
+    html += `
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="mb-4">
+            <h6><i class="fas fa-route"></i> Lộ trình giao hàng</h6>
+            <div class="timeline">`;
+    
+    if (data.trackings && data.trackings.length > 0) {
+        data.trackings.forEach(tracking => {
+            html += `
+                <div class="timeline-item ${tracking.status === 'COMPLETED' ? 'completed' : ''}">
+                    <p class="mb-1"><strong>${tracking.description}</strong></p>
+                    <p class="mb-0 text-muted small">${formatDateTime(tracking.createdAt)}</p>
+                </div>`;
+        });
+    } else {
+        html += '<p class="text-muted">Chưa có thông tin lộ trình</p>';
+    }
+    
+    html += `
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Dịch vụ:</strong> ${data.serviceTypeName}</p>
+                <p><strong>Ngày tạo:</strong> ${formatDateTime(data.createdAt)}</p>
+            </div>
+            <div class="col-md-6 text-end">
+                <h5>Phí vận chuyển</h5>
+                <h3 class="text-danger">${formatCurrency(data.shipmentFee)} đ</h3>
+            </div>
+        </div>`;
+    
+    document.getElementById('orderDetailContent').innerHTML = html;
+}
+
+function formatDateTime(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleString('vi-VN');
+}
+
+function formatCurrency(amount) {
+    return amount.toLocaleString('vi-VN');
+}
+</script>
+</body>
+</html>

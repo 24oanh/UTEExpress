@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Thêm kiện hàng</title>
+    <link rel="stylesheet" th:href="@{/css/warehouse.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/warehouse-header :: header}"></div>
+    <div class="container">
+        <h1>Thêm kiện hàng - Đơn <span th:text="${order.orderCode}"></span></h1>
+        <form th:action="@{/warehouse/orders/{id}/packages/add(id=${order.id})}" 
+              th:object="${package}" method="post" class="form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Mã kiện *</label>
+                    <input type="text" th:field="*{packageCode}" required>
+                </div>
+                <div class="form-group">
+                    <label>Số lượng</label>
+                    <input type="number" th:field="*{unitQuantity}" min="1" value="1">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Mô tả *</label>
+                <textarea th:field="*{description}" rows="2" required></textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Trọng lượng (kg) *</label>
+                    <input type="number" th:field="*{weight}" step="0.1" required>
+                </div>
+                <div class="form-group">
+                    <label>Dài (cm) *</label>
+                    <input type="number" th:field="*{length}" step="0.1" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Rộng (cm) *</label>
+                    <input type="number" th:field="*{width}" step="0.1" required>
+                </div>
+                <div class="form-group">
+                    <label>Cao (cm) *</label>
+                    <input type="number" th:field="*{height}" step="0.1" required>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Thêm</button>
+                <a th:href="@{/warehouse/orders/{id}(id=${order.id})}" class="btn-secondary">Hủy</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

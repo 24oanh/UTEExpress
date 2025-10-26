@@ -1,0 +1,406 @@
+<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thông báo - UTEExpress</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #ecf0f1;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 260px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, #34495e 100%);
+            box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .sidebar .logo {
+            padding: 25px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .sidebar .logo h3 {
+            color: white;
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .sidebar-nav {
+            padding: 20px 0;
+        }
+
+        .nav-item {
+            margin: 5px 15px;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 12px 20px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .nav-link i {
+            width: 20px;
+            margin-right: 12px;
+        }
+
+        .main-content {
+            margin-left: 260px;
+            padding: 0;
+        }
+
+        .topbar {
+            background: white;
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        .content-area {
+            padding: 30px;
+        }
+
+        .notification-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+        }
+
+        .notification-item {
+            padding: 15px;
+            border-left: 4px solid transparent;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .notification-item:hover {
+            background: #f8f9fa;
+            transform: translateX(5px);
+        }
+
+        .notification-item.unread {
+            background: #e3f2fd;
+            border-left-color: var(--secondary-color);
+        }
+
+        .notification-item.read {
+            opacity: 0.7;
+        }
+
+        .notification-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .notification-icon.order {
+            background: rgba(52, 152, 219, 0.1);
+            color: var(--secondary-color);
+        }
+
+        .notification-icon.chat {
+            background: rgba(155, 89, 182, 0.1);
+            color: #9b59b6;
+        }
+
+        .notification-icon.alert {
+            background: rgba(231, 76, 60, 0.1);
+            color: #e74c3c;
+        }
+
+        .notification-time {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .filter-btn {
+            padding: 8px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--secondary-color);
+            border-color: var(--secondary-color);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">
+            <h3><i class="fas fa-shipping-fast"></i> UTEExpress</h3>
+            <span>Admin Panel</span>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-item">
+                <a href="/admin/dashboard" class="nav-link">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="/admin/users" class="nav-link">
+                    <i class="fas fa-users"></i>
+                    <span>Quản lý User</span>
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="/admin/orders" class="nav-link">
+                    <i class="fas fa-box"></i>
+                    <span>Đơn hàng</span>
+                </a>
+            </div>
+            <div class="nav-item">
+			    <a href="/admin/chat" class="nav-link">
+			        <i class="fas fa-comments"></i>
+			        <span>Chat</span>
+			    </a>
+			</div>
+			<div class="nav-item" style="position: relative;">
+			    <a href="/admin/notifications" class="nav-link active">
+			        <i class="fas fa-bell"></i>
+			        <span>Thông báo</span>
+			    </a>
+			    <span class="badge bg-danger" id="notifBadge" style="display: none; position: absolute; right: 20px; top: 50%; transform: translateY(-50%);">0</span>
+			</div>
+            <div class="nav-item">
+                <a href="/logout" class="nav-link">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Đăng xuất</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="topbar">
+            <h4>Thông báo</h4>
+            <button class="btn btn-sm btn-primary" onclick="markAllAsRead()">
+                <i class="fas fa-check-double"></i> Đánh dấu tất cả đã đọc
+            </button>
+        </div>
+
+        <div class="content-area">
+            <div class="notification-card">
+                <div class="filter-tabs">
+                    <button class="filter-btn active" data-filter="all">Tất cả</button>
+                    <button class="filter-btn" data-filter="unread">Chưa đọc</button>
+                    <button class="filter-btn" data-filter="ORDER_CREATED">Đơn hàng</button>
+                    <button class="filter-btn" data-filter="CHAT_MESSAGE">Chat</button>
+                </div>
+
+                <div id="notificationsList">
+                    <div th:if="${notifications.empty}" class="text-center py-5">
+                        <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Chưa có thông báo nào</p>
+                    </div>
+
+                    <div th:each="notif : ${notifications}" 
+                         th:class="${notif.isRead ? 'notification-item read' : 'notification-item unread'}"
+                         th:attr="data-id=${notif.id}, data-type=${notif.type}"
+                         onclick="markAsRead(this.dataset.id)">
+                        <div class="d-flex gap-3 align-items-start">
+                            <div th:class="${'notification-icon ' + (notif.type == 'ORDER_CREATED' ? 'order' : (notif.type == 'CHAT_MESSAGE' ? 'chat' : 'alert'))}">
+                                <i th:class="${notif.type == 'ORDER_CREATED' ? 'fas fa-shopping-cart' : (notif.type == 'CHAT_MESSAGE' ? 'fas fa-comment' : 'fas fa-bell')}"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="fw-bold" th:text="${notif.message}"></div>
+                                <div class="notification-time" th:text="${#temporals.format(notif.createdAt, 'HH:mm dd/MM/yyyy')}"></div>
+                            </div>
+                            <div th:if="${!notif.isRead}">
+                                <span class="badge bg-primary">Mới</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <script>
+        let stompClient = null;
+
+        function connect() {
+            const socket = new SockJS('/ws');
+            stompClient = Stomp.over(socket);
+            
+            stompClient.connect({}, function(frame) {
+                console.log('Connected: ' + frame);
+                
+                stompClient.subscribe('/topic/admin/notifications', function(message) {
+                    const notification = JSON.parse(message.body);
+                    addNotification(notification);
+                    updateUnreadCount();
+                    showToast(notification.message);
+                });
+            });
+        }
+
+        function addNotification(notif) {
+            const list = document.getElementById('notificationsList');
+            
+            const notifDiv = document.createElement('div');
+            notifDiv.className = 'notification-item unread';
+            notifDiv.setAttribute('data-id', notif.id);
+            notifDiv.setAttribute('data-type', notif.type);
+            notifDiv.onclick = function() { markAsRead(notif.id); };
+            
+            const iconClass = notif.type === 'ORDER_CREATED' ? 'order' : 
+                            (notif.type === 'CHAT_MESSAGE' ? 'chat' : 'alert');
+            const iconType = notif.type === 'ORDER_CREATED' ? 'fa-shopping-cart' : 
+                           (notif.type === 'CHAT_MESSAGE' ? 'fa-comment' : 'fa-bell');
+            
+            notifDiv.innerHTML = `
+                <div class="d-flex gap-3 align-items-start">
+                    <div class="notification-icon ${iconClass}">
+                        <i class="fas ${iconType}"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="fw-bold">${notif.message}</div>
+                        <div class="notification-time">${new Date(notif.createdAt).toLocaleString('vi-VN')}</div>
+                    </div>
+                    <div>
+                        <span class="badge bg-primary">Mới</span>
+                    </div>
+                </div>
+            `;
+            
+            list.insertBefore(notifDiv, list.firstChild);
+        }
+
+        function markAsRead(notificationId) {
+            fetch(`/admin/notifications/${notificationId}/mark-read`, {
+                method: 'POST'
+            })
+            .then(() => {
+                const notifItem = document.querySelector(`[data-id="${notificationId}"]`);
+                if (notifItem) {
+                    notifItem.classList.remove('unread');
+                    notifItem.classList.add('read');
+                    const badge = notifItem.querySelector('.badge');
+                    if (badge) badge.remove();
+                }
+                updateUnreadCount();
+            });
+        }
+
+        function markAllAsRead() {
+            fetch('/admin/notifications/mark-all-read', {
+                method: 'POST'
+            })
+            .then(() => {
+                document.querySelectorAll('.notification-item.unread').forEach(item => {
+                    item.classList.remove('unread');
+                    item.classList.add('read');
+                    const badge = item.querySelector('.badge');
+                    if (badge) badge.remove();
+                });
+                updateUnreadCount();
+            });
+        }
+
+        function updateUnreadCount() {
+            fetch('/admin/notifications/unread-count')
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.getElementById('notifBadge');
+                    if (data.unreadCount > 0) {
+                        badge.textContent = data.unreadCount;
+                        badge.style.display = 'inline';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                });
+        }
+
+        function showToast(message) {
+            if (Notification.permission === "granted") {
+                new Notification("UTEExpress", {
+                    body: message,
+                    icon: "/images/logo.png"
+                });
+            }
+        }
+
+        // Filter functionality
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                const filter = this.dataset.filter;
+                document.querySelectorAll('.notification-item').forEach(item => {
+                    if (filter === 'all') {
+                        item.style.display = 'block';
+                    } else if (filter === 'unread') {
+                        item.style.display = item.classList.contains('unread') ? 'block' : 'none';
+                    } else {
+                        item.style.display = item.dataset.type === filter ? 'block' : 'none';
+                    }
+                });
+            });
+        });
+
+        window.onload = function() {
+            connect();
+            updateUnreadCount();
+            
+            if (Notification.permission === "default") {
+                Notification.requestPermission();
+            }
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Chi tiết báo cáo</title>
+<link rel="stylesheet" th:href="@{/css/warehouse.css}">
+</head>
+<body>
+	<div th:replace="~{fragments/warehouse-header :: header}"></div>
+	<div class="container">
+		<div class="page-header">
+			<h1>Chi tiết báo cáo</h1>
+			<a th:href="@{/warehouse/reports}" class="btn-secondary">Quay lại</a>
+		</div>
+
+		<div class="detail-card">
+			<h3>Thông tin báo cáo</h3>
+			<p>
+				<strong>Loại:</strong> <span th:text="${report.reportType}"></span>
+			</p>
+			<p>
+				<strong>Từ ngày:</strong> <span
+					th:text="${#temporals.format(report.startDate, 'dd/MM/yyyy HH:mm')}"></span>
+			</p>
+			<p>
+				<strong>Đến ngày:</strong> <span
+					th:text="${#temporals.format(report.endDate, 'dd/MM/yyyy HH:mm')}"></span>
+			</p>
+			<p>
+				<strong>Người tạo:</strong> <span
+					th:text="${report.createdBy.fullName}"></span>
+			</p>
+			<p>
+				<strong>Ngày tạo:</strong> <span
+					th:text="${#temporals.format(report.createdAt, 'dd/MM/yyyy HH:mm')}"></span>
+			</p>
+		</div>
+
+		<div class="stats-grid">
+			<div class="stat-card">
+				<h4>Tồn đầu kỳ</h4>
+				<p class="stat-number" th:text="${report.openingStock}"></p>
+			</div>
+			<div class="stat-card">
+				<h4>Phiếu nhập</h4>
+				<p class="stat-number" th:text="${report.totalInboundReceipts}"></p>
+			</div>
+			<div class="stat-card">
+				<h4>SL nhập</h4>
+				<p class="stat-number" th:text="${report.totalInboundQuantity}"></p>
+			</div>
+			<div class="stat-card">
+				<h4>Phiếu xuất</h4>
+				<p class="stat-number" th:text="${report.totalOutboundReceipts}"></p>
+			</div>
+			<div class="stat-card">
+				<h4>SL xuất</h4>
+				<p class="stat-number" th:text="${report.totalOutboundQuantity}"></p>
+			</div>
+			<div class="stat-card">
+				<h4>Tồn cuối kỳ</h4>
+				<p class="stat-number" th:text="${report.closingStock}"></p>
+			</div>
+			<div class="stat-card">
+				<h4>Tỷ lệ sử dụng</h4>
+				<p class="stat-number"
+					th:text="${#numbers.formatDecimal(report.utilizationRate, 1, 2)} + '%'"></p>
+			</div>
+		</div>
+
+		<div class="detail-card" th:if="${report.notes}">
+			<h4>Ghi chú</h4>
+			<p th:text="${report.notes}"></p>
+		</div>
+	</div>
+</body>
+</html>

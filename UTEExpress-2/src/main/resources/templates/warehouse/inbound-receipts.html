@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Phiếu nhập kho</title>
+    <link rel="stylesheet" th:href="@{/css/warehouse.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/warehouse-header :: header}"></div>
+    <div class="container">
+        <div class="page-header">
+            <h1>Phiếu nhập kho</h1>
+            <a th:href="@{/warehouse/inbound/create}" class="btn-primary">Tạo phiếu nhập</a>
+        </div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Mã phiếu</th>
+                    <th>Đơn hàng</th>
+                    <th>Người nhận</th>
+                    <th>Ngày nhận</th>
+                    <th>Trạng thái</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="receipt : ${receipts}">
+                    <td th:text="${receipt.receiptCode}"></td>
+                    <td th:text="${receipt.order != null ? receipt.order.orderCode : '-'}"></td>
+                    <td th:text="${receipt.receivedBy.fullName}"></td>
+                    <td th:text="${#temporals.format(receipt.receivedDate, 'dd/MM/yyyy HH:mm')}"></td>
+                    <td><span th:class="'badge badge-' + ${receipt.status}" th:text="${receipt.status}"></span></td>
+                    <td>
+                        <form th:if="${receipt.status == T(ltweb.entity.ReceiptStatus).PENDING}" 
+                              th:action="@{/warehouse/inbound/{id}/approve(id=${receipt.id})}" method="post">
+                            <button type="submit" class="btn-sm">Duyệt</button>
+                        </form>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
