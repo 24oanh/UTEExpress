@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -22,16 +21,17 @@ public class PaymentService {
     private final EmailService emailService;
     private final NotificationService notificationService;
 
+    // PaymentService.java - SỬA LẠI
     @Transactional
     public PaymentResponseDTO createPayment(PaymentRequestDTO dto) {
         Order order = orderRepository.findById(dto.getOrderId())
-            .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
+                .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
 
         Payment payment = Payment.builder()
-            .order(order)
-            .amount(order.getShipmentFee())
-            .paymentMethod(dto.getPaymentMethod())
-            .build();
+                .order(order)
+                .amount(order.getShipmentFee())
+                .paymentMethod(dto.getPaymentMethod())
+                .build();
 
         payment = paymentRepository.save(payment);
 
@@ -43,37 +43,36 @@ public class PaymentService {
             paymentRepository.save(payment);
             orderRepository.save(order);
 
-            if (order.getCustomer() != null) {
-                notificationService.createCustomerNotification(
-                    order.getCustomer().getId(),
-                    "Đơn hàng " + order.getOrderCode() + " đã được xác nhận. Bạn sẽ thanh toán khi nhận hàng.",
-                    NotificationType.ORDER_CREATED,
-                    order
-                );
+            if (order.getCustomer() != null && order.getCustomer().getUser() != null) {
+                notificationService.createNotification(
+                        order.getCustomer().getUser().getId(),
+                        "CUSTOMER",
+                        "Đơn hàng " + order.getOrderCode() + " đã được xác nhận. Bạn sẽ thanh toán khi nhận hàng.",
+                        NotificationType.ORDER_CREATED,
+                        order);
             }
 
             return PaymentResponseDTO.builder()
-                .paymentCode(payment.getPaymentCode())
-                .message("Đơn hàng đã được xác nhận. Bạn sẽ thanh toán khi nhận hàng.")
-                .success(true)
-                .build();
+                    .paymentCode(payment.getPaymentCode())
+                    .message("Đơn hàng đã được xác nhận. Bạn sẽ thanh toán khi nhận hàng.")
+                    .success(true)
+                    .build();
         }
 
-        // MOMO/ZALOPAY/BANK_CARD - Thanh toán ngay lập tức
         order.setPaymentStatus(PaymentStatus.PAID);
         payment.setStatus(PaymentStatus.PAID);
         payment.setPaymentDate(LocalDateTime.now());
-        
+
         paymentRepository.save(payment);
         orderRepository.save(order);
 
-        if (order.getCustomer() != null) {
-            notificationService.createCustomerNotification(
-                order.getCustomer().getId(),
-                "Thanh toán đơn hàng " + order.getOrderCode() + " thành công. Đơn hàng đang được xử lý.",
-                NotificationType.ORDER_CREATED,
-                order
-            );
+        if (order.getCustomer() != null && order.getCustomer().getUser() != null) {
+            notificationService.createNotification(
+                    order.getCustomer().getUser().getId(),
+                    "CUSTOMER",
+                    "Thanh toán đơn hàng " + order.getOrderCode() + " thành công. Đơn hàng đang được xử lý.",
+                    NotificationType.ORDER_CREATED,
+                    order);
         }
 
         PaymentResponseDTO response;
@@ -83,10 +82,10 @@ public class PaymentService {
             response = zaloPayPaymentService.createPayment(payment, dto.getReturnUrl());
         } else {
             response = PaymentResponseDTO.builder()
-                .paymentCode(payment.getPaymentCode())
-                .message("Thanh toán thành công")
-                .success(true)
-                .build();
+                    .paymentCode(payment.getPaymentCode())
+                    .message("Thanh toán thành công")
+                    .success(true)
+                    .build();
         }
 
         return response;
@@ -107,15 +106,14 @@ public class PaymentService {
         orderRepository.save(order);
 
         sendInvoiceEmail(payment);
-        
+
         // Thông báo cho customer
         if (order.getCustomer() != null) {
             notificationService.createCustomerNotification(
-                order.getCustomer().getId(),
-                "Thanh toán đơn hàng " + order.getOrderCode() + " thành công. Đơn hàng đang được xử lý.",
-                NotificationType.ORDER_CREATED,
-                order
-            );
+                    order.getCustomer().getId(),
+                    "Thanh toán đơn hàng " + order.getOrderCode() + " thành công. Đơn hàng đang được xử lý.",
+                    NotificationType.ORDER_CREATED,
+                    order);
         }
 
         return payment;
@@ -159,8 +157,11 @@ public class PaymentService {
                 "<p><strong>Địa chỉ:</strong> " + order.getRecipientAddress() + "</p>" +
                 "<hr>" +
                 "<h3>Chi phí</h3>" +
-                "<p><strong>Phí vận chuyển:</strong> " + String.format("%,d", payment.getAmount().longValue()) + " đ</p>" +
-                "<p><strong>Trạng thái:</strong> " + (payment.getPaymentMethod() == PaymentMethod.COD ? "Thanh toán khi nhận hàng" : "Đã thanh toán") + "</p>" +
+                "<p><strong>Phí vận chuyển:</strong> " + String.format("%,d", payment.getAmount().longValue())
+                + " đ</p>" +
+                "<p><strong>Trạng thái:</strong> "
+                + (payment.getPaymentMethod() == PaymentMethod.COD ? "Thanh toán khi nhận hàng" : "Đã thanh toán")
+                + "</p>" +
                 "<hr>" +
                 "<p>Cảm ơn bạn đã sử dụng dịch vụ UTEExpress!</p>" +
                 "</body></html>";
@@ -168,11 +169,16 @@ public class PaymentService {
 
     private String getPaymentMethodName(PaymentMethod method) {
         switch (method) {
-            case MOMO: return "Ví MoMo";
-            case ZALOPAY: return "ZaloPay";
-            case BANK_CARD: return "Thẻ ngân hàng";
-            case COD: return "Thanh toán khi nhận hàng";
-            default: return "Khác";
+            case MOMO:
+                return "Ví MoMo";
+            case ZALOPAY:
+                return "ZaloPay";
+            case BANK_CARD:
+                return "Thẻ ngân hàng";
+            case COD:
+                return "Thanh toán khi nhận hàng";
+            default:
+                return "Khác";
         }
     }
 

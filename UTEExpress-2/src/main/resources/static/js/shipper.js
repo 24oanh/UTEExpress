@@ -57,9 +57,32 @@ function failShipment(shipmentId, notes) {
 	}
 }
 
+// /static/js/shippers.js
+
+document.addEventListener('DOMContentLoaded', function () {
+	const shipperSelect = document.querySelector('select[name="shipperId"]');
+
+	if (shipperSelect) {
+		// Fetch active shippers
+		fetch('/warehouse/api/shippers/active')
+			.then(response => response.json())
+			.then(shippers => {
+				shippers.forEach(shipper => {
+					const option = document.createElement('option');
+					option.value = shipper.id;
+					option.textContent = `${shipper.name} - ${shipper.phone} (${shipper.vehicleType})`;
+					shipperSelect.appendChild(option);
+				});
+			})
+			.catch(error => {
+				console.error('Error loading shippers:', error);
+			});
+	}
+});
+
 function updateShipperLocation() {
 	if (navigator.geolocation) {
-		navigator.geolocation.getCurrentPosition(function(position) {
+		navigator.geolocation.getCurrentPosition(function (position) {
 			const formData = new FormData();
 			formData.append('latitude', position.coords.latitude);
 			formData.append('longitude', position.coords.longitude);
@@ -73,7 +96,7 @@ function updateShipperLocation() {
 					console.log('Location updated:', result);
 				})
 				.catch(error => console.error('Error:', error));
-		}, function(error) {
+		}, function (error) {
 			console.error('Geolocation error:', error);
 		}, {
 			enableHighAccuracy: true,
@@ -91,11 +114,11 @@ function startLocationTracking() {
 function initImagePreview() {
 	const fileInput = document.querySelector('input[type="file"]');
 	if (fileInput) {
-		fileInput.addEventListener('change', function(e) {
+		fileInput.addEventListener('change', function (e) {
 			const file = e.target.files[0];
 			if (file) {
 				const reader = new FileReader();
-				reader.onload = function(e) {
+				reader.onload = function (e) {
 					let preview = document.getElementById('image-preview');
 					if (!preview) {
 						preview = document.createElement('div');
@@ -134,7 +157,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 	return R * c;
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
 	initImagePreview();
 
 	const shipmentDetailPage = document.querySelector('[data-shipment-detail]');

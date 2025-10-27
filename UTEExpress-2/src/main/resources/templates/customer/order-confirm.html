@@ -165,7 +165,7 @@
 						<div class="info-row">
 							<span class="info-label">Loại dịch vụ:</span> <span
 								class="info-value"
-								th:text="${summary.serviceType == T(ltweb.entity.ServiceType).EXPRESS ? 'Nhanh' : (summary.serviceType == T(ltweb.entity.ServiceType).STANDARD ? 'Chuẩn' : 'Tiết kiệm')}"></span>
+								th:text="${summary.serviceType.name() == 'EXPRESS' ? 'Nhanh' : (summary.serviceType.name() == 'STANDARD' ? 'Chuẩn' : 'Tiết kiệm')}"></span>
 						</div>
 						<div class="info-row">
 							<span class="info-label">Kho đích:</span> <span

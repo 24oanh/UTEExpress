@@ -21,6 +21,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/warehouse/orders")
@@ -35,7 +36,7 @@ public class OrderController {
     private final OrderRepository orderRepository;
     private final ShipmentLegService shipmentLegService;
     private final ShipmentRepository shipmentRepository;
-    private final NotificationService notificationService; 
+    private final NotificationService notificationService;
 
     @GetMapping
     public String listOrders(Model model, HttpSession session) {
@@ -45,13 +46,28 @@ public class OrderController {
         return "warehouse/orders";
     }
 
+    // Thêm vào /warehouse/orders/{id} detail page
     @GetMapping("/{id}")
-    public String orderDetail(@PathVariable Long id, Model model) {
+    public String orderDetail(@PathVariable Long id, Model model, HttpSession session) {
         Order order = orderService.getOrderById(id);
         List<Package> packages = orderService.getPackagesByOrderId(id);
         List<Shipper> availableShippers = shipmentService.getActiveShippers();
-
         Shipment shipment = shipmentService.getShipmentByOrderId(id);
+        Warehouse warehouse = (Warehouse) session.getAttribute("currentWarehouse");
+
+        // Kiểm tra xem đã có inbound receipt chưa
+        List<InboundReceipt> inboundReceipts = warehouseService.getInboundReceiptsByOrderId(id);
+        boolean hasInboundReceipt = !inboundReceipts.isEmpty();
+
+        // Kiểm tra xem đã có outbound receipt chưa
+        List<OutboundReceipt> outboundReceipts = warehouseService.getOutboundReceiptsByOrderId(id);
+        boolean hasOutboundReceipt = !outboundReceipts.isEmpty();
+
+        // Kiểm tra tồn kho
+        List<Inventory> inventories = packages.stream()
+                .map(pkg -> warehouseService.getInventoryByPackageId(warehouse.getId(), pkg.getId()))
+                .filter(inv -> inv != null)
+                .collect(Collectors.toList());
 
         if (shipment != null) {
             List<ShipmentLeg> legs = shipmentLegRepository.findByShipmentIdOrderByLegSequence(shipment.getId());
@@ -61,13 +77,18 @@ public class OrderController {
         model.addAttribute("order", order);
         model.addAttribute("packages", packages);
         model.addAttribute("availableShippers", availableShippers);
+        model.addAttribute("hasInboundReceipt", hasInboundReceipt);
+        model.addAttribute("hasOutboundReceipt", hasOutboundReceipt);
+        model.addAttribute("inventories", inventories);
+        model.addAttribute("inboundReceipts", inboundReceipts);
+        model.addAttribute("outboundReceipts", outboundReceipts);
 
         return "warehouse/order-detail";
     }
 
     @PostMapping("/{id}/assign-shipper")
     public String assignShipper(@PathVariable Long id, @RequestParam Long shipperId,
-                                RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes) {
         try {
             orderService.assignOrderToShipper(id, shipperId);
             redirectAttributes.addFlashAttribute("success", "Shipper assigned and route updated successfully");
@@ -80,7 +101,7 @@ public class OrderController {
 
     @PostMapping("/{id}/update-status")
     public String updateStatus(@PathVariable Long id, @RequestParam OrderStatus status,
-                              RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes) {
         try {
             orderService.updateOrderStatus(id, status);
             redirectAttributes.addFlashAttribute("success", "Order status updated successfully");
@@ -113,7 +134,7 @@ public class OrderController {
 
     @PostMapping("/{id}/packages/add")
     public String addPackage(@PathVariable Long id, @ModelAttribute Package packageItem,
-                            RedirectAttributes redirectAttributes) {
+            RedirectAttributes redirectAttributes) {
         try {
             orderService.addPackageToOrder(id, packageItem);
             redirectAttributes.addFlashAttribute("success", "Package added successfully");
@@ -130,6 +151,7 @@ public class OrderController {
         model.addAttribute("shippers", shippers);
         return "warehouse/shippers";
     }
+
     @PostMapping("/{id}/create-shipment")
     public String createShipmentForOrder(@PathVariable Long id,
             RedirectAttributes redirectAttributes,
@@ -149,8 +171,7 @@ public class OrderController {
                 return "redirect:/warehouse/orders/" + id;
             }
 
-            RouteCalculationService.RouteSegment firstSegment =
-                shipmentLegService.getFirstLegPreferredShipper(order);
+            RouteCalculationService.RouteSegment firstSegment = shipmentLegService.getFirstLegPreferredShipper(order);
 
             Shipper defaultShipper = null;
             if (firstSegment != null && firstSegment.getPreferredShipper() != null) {
@@ -158,11 +179,11 @@ public class OrderController {
             }
 
             Shipment shipment = Shipment.builder()
-                .shipmentCode("SH" + System.currentTimeMillis())
-                .order(order)
-                .shipper(defaultShipper)
-                .status(ShipmentStatus.PENDING)
-                .build();
+                    .shipmentCode("SH" + System.currentTimeMillis())
+                    .order(order)
+                    .shipper(defaultShipper)
+                    .status(ShipmentStatus.PENDING)
+                    .build();
 
             shipment = shipmentRepository.save(shipment);
             shipmentLegService.createShipmentLegs(shipment, order);
@@ -172,12 +193,11 @@ public class OrderController {
                 orderRepository.save(order);
 
                 notificationService.createNotification(
-                    defaultShipper.getUser().getId(),
-                    "SHIPPER",
-                    "Bạn được phân công đơn hàng: " + order.getOrderCode(),
-                    NotificationType.ORDER_ASSIGNED,
-                    order
-                );
+                        defaultShipper.getUser().getId(),
+                        "SHIPPER",
+                        "Bạn được phân công đơn hàng: " + order.getOrderCode(),
+                        NotificationType.ORDER_ASSIGNED,
+                        order);
             }
 
             redirectAttributes.addFlashAttribute("success", "✓ Đã tạo shipment thành công!");

@@ -26,84 +26,90 @@ import java.util.stream.Collectors;
 public class AdminController {
 
     private final AdminService adminService;
-    private final AuthService authService;
     private final UserService userService;
     private final OrderService orderService;
     private final TrackingService trackingService;
     private final ChatService chatService;
     private final NotificationService notificationService;
-    
+
     @GetMapping("/dashboard")
     public String dashboard(Model model, HttpSession session) {
         User admin = (User) session.getAttribute("currentUser");
-        
-        // User statistics
+
+        // ✅ User statistics - DỮ LIỆU THỰC
         long totalUsers = userService.countAllUsers();
         long totalCustomers = userService.countUsersByRole("ROLE_CUSTOMER");
         long totalShippers = userService.countUsersByRole("ROLE_SHIPPER");
         long totalWarehouseStaff = userService.countUsersByRole("ROLE_WAREHOUSE_STAFF");
         long activeUsers = userService.countActiveUsers();
-        
-        // ✅ THÊM: Order statistics
+
+        // ✅ Order statistics - DỮ LIỆU THỰC
         List<Order> allOrders = orderService.getAllOrders();
+
+        // Recent orders - 10 đơn gần nhất
         List<Order> recentOrders = allOrders.stream()
                 .sorted((o1, o2) -> o2.getCreatedAt().compareTo(o1.getCreatedAt()))
                 .limit(10)
                 .collect(Collectors.toList());
+
         long totalOrders = allOrders.size();
+
+        // Đếm theo status thực tế
         long pendingOrders = allOrders.stream()
-            .filter(o -> o.getStatus() == OrderStatus.CHO_GIAO)
-            .count();
+                .filter(o -> o.getStatus() == OrderStatus.CHO_GIAO)
+                .count();
+
         long inProgressOrders = allOrders.stream()
-            .filter(o -> o.getStatus() == OrderStatus.DANG_GIAO)
-            .count();
+                .filter(o -> o.getStatus() == OrderStatus.DANG_GIAO)
+                .count();
+
         long completedOrders = allOrders.stream()
-            .filter(o -> o.getStatus() == OrderStatus.HOAN_THANH)
-            .count();
+                .filter(o -> o.getStatus() == OrderStatus.HOAN_THANH)
+                .count();
+
         long failedOrders = allOrders.stream()
-            .filter(o -> o.getStatus() == OrderStatus.THAT_BAI || o.getStatus() == OrderStatus.HUY)
-            .count();
-        
-        // ✅ THÊM: Revenue statistics
+                .filter(o -> o.getStatus() == OrderStatus.THAT_BAI || o.getStatus() == OrderStatus.HUY)
+                .count();
+
+        // ✅ Revenue - DỮ LIỆU THỰC
         BigDecimal totalRevenue = allOrders.stream()
-            .filter(o -> o.getStatus() == OrderStatus.HOAN_THANH)
-            .map(Order::getShipmentFee)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-        
-        // Chat & Notifications
+                .filter(o -> o.getStatus() == OrderStatus.HOAN_THANH)
+                .map(Order::getShipmentFee)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // ✅ Chat & Notifications - DỮ LIỆU THỰC
         long unreadChats = chatService.getTotalUnreadForAdmin();
         long unreadNotifications = notificationService.countUnreadNotifications(admin.getId());
-        
+
+        // Add to model
         model.addAttribute("admin", admin);
         model.addAttribute("totalUsers", totalUsers);
         model.addAttribute("totalCustomers", totalCustomers);
         model.addAttribute("totalShippers", totalShippers);
         model.addAttribute("totalWarehouseStaff", totalWarehouseStaff);
         model.addAttribute("activeUsers", activeUsers);
-        
-        // ✅ THÊM: Order statistics to model
+
         model.addAttribute("totalOrders", totalOrders);
         model.addAttribute("pendingOrders", pendingOrders);
         model.addAttribute("inProgressOrders", inProgressOrders);
         model.addAttribute("completedOrders", completedOrders);
         model.addAttribute("failedOrders", failedOrders);
         model.addAttribute("totalRevenue", totalRevenue);
-        
+
         model.addAttribute("unreadChats", unreadChats);
         model.addAttribute("unreadNotifications", unreadNotifications);
         model.addAttribute("recentOrders", recentOrders);
 
-        
         return "admin/dashboard";
     }
-    
+
     @GetMapping("/users")
     public String listUsers(@RequestParam(required = false) String role,
-                           @RequestParam(required = false) String status,
-                           @RequestParam(required = false) String search,
-                           Model model) {
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String search,
+            Model model) {
         List<User> users;
-        
+
         if (role != null && !role.isEmpty()) {
             users = userService.getUsersByRole(role);
         } else if (status != null && !status.isEmpty()) {
@@ -113,36 +119,35 @@ public class AdminController {
         } else {
             users = userService.getAllUsers();
         }
-        
+
         model.addAttribute("users", users);
-        
         return "admin/users";
     }
-    
+
     @GetMapping("/users/{id}")
     public String userDetail(@PathVariable Long id, Model model) {
         User user = userService.getUserById(id);
         model.addAttribute("user", user);
         return "admin/user-detail";
     }
-    
+
     @GetMapping("/users/create")
     public String createUserForm(Model model) {
         model.addAttribute("userDTO", new AdminCreateUserDTO());
         model.addAttribute("roles", RoleType.values());
         return "admin/user-form";
     }
-    
+
     @PostMapping("/users/create")
     public String createUser(@Valid @ModelAttribute AdminCreateUserDTO dto,
-                            BindingResult result,
-                            Model model,
-                            RedirectAttributes redirectAttributes) {
+            BindingResult result,
+            Model model,
+            RedirectAttributes redirectAttributes) {
         if (result.hasErrors()) {
             model.addAttribute("roles", RoleType.values());
             return "admin/user-form";
         }
-        
+
         try {
             adminService.createUser(dto);
             redirectAttributes.addFlashAttribute("success", "Tạo tài khoản thành công");
@@ -153,36 +158,36 @@ public class AdminController {
             return "admin/user-form";
         }
     }
-    
+
     @GetMapping("/users/{id}/edit")
     public String editUserForm(@PathVariable Long id, Model model) {
         User user = userService.getUserById(id);
         AdminUpdateUserDTO dto = AdminUpdateUserDTO.builder()
-            .id(user.getId())
-            .username(user.getUsername())
-            .email(user.getEmail())
-            .fullName(user.getFullName())
-            .phone(user.getPhone())
-            .isActive(user.getIsActive())
-            .roleIds(user.getRoles().stream().map(Role::getId).toList())
-            .build();
-        
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .phone(user.getPhone())
+                .isActive(user.getIsActive())
+                .roleIds(user.getRoles().stream().map(Role::getId).toList())
+                .build();
+
         model.addAttribute("userDTO", dto);
         model.addAttribute("roles", RoleType.values());
         return "admin/user-edit";
     }
-    
+
     @PostMapping("/users/{id}/update")
     public String updateUser(@PathVariable Long id,
-                            @Valid @ModelAttribute AdminUpdateUserDTO dto,
-                            BindingResult result,
-                            Model model,
-                            RedirectAttributes redirectAttributes) {
+            @Valid @ModelAttribute AdminUpdateUserDTO dto,
+            BindingResult result,
+            Model model,
+            RedirectAttributes redirectAttributes) {
         if (result.hasErrors()) {
             model.addAttribute("roles", RoleType.values());
             return "admin/user-edit";
         }
-        
+
         try {
             adminService.updateUser(id, dto);
             redirectAttributes.addFlashAttribute("success", "Cập nhật tài khoản thành công");
@@ -193,7 +198,7 @@ public class AdminController {
             return "admin/user-edit";
         }
     }
-    
+
     @PostMapping("/users/{id}/delete")
     public String deleteUser(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
@@ -204,7 +209,7 @@ public class AdminController {
         }
         return "redirect:/admin/users";
     }
-    
+
     @PostMapping("/users/{id}/toggle-status")
     public String toggleUserStatus(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
@@ -215,7 +220,7 @@ public class AdminController {
         }
         return "redirect:/admin/users/" + id;
     }
-    
+
     @PostMapping("/users/{id}/reset-password")
     public String resetPassword(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
@@ -226,7 +231,7 @@ public class AdminController {
         }
         return "redirect:/admin/users/" + id;
     }
-    
+
     @GetMapping("/users/{id}/assign-roles")
     public String assignRolesForm(@PathVariable Long id, Model model) {
         User user = userService.getUserById(id);
@@ -234,11 +239,11 @@ public class AdminController {
         model.addAttribute("allRoles", RoleType.values());
         return "admin/assign-roles";
     }
-    
+
     @PostMapping("/users/{id}/assign-roles")
     public String assignRoles(@PathVariable Long id,
-                             @RequestParam List<Long> roleIds,
-                             RedirectAttributes redirectAttributes) {
+            @RequestParam List<Long> roleIds,
+            RedirectAttributes redirectAttributes) {
         try {
             adminService.assignRoles(id, roleIds);
             redirectAttributes.addFlashAttribute("success", "Gán quyền thành công");
@@ -247,7 +252,7 @@ public class AdminController {
         }
         return "redirect:/admin/users/" + id;
     }
-    
+
     @GetMapping("/orders")
     public String listOrders(
             @RequestParam(required = false) String status,
@@ -255,9 +260,8 @@ public class AdminController {
             @RequestParam(required = false) String endDate,
             @RequestParam(required = false) String search,
             Model model) {
-        
+
         List<Order> orders = orderService.getAllOrders();
-        
         model.addAttribute("orders", orders);
         return "admin/orders";
     }
@@ -268,26 +272,23 @@ public class AdminController {
         List<Package> packages = orderService.getPackagesByOrderId(id);
         Shipment shipment = orderService.getShipmentByOrderId(id);
         List<Tracking> trackings = new ArrayList<>();
-        
+
         if (shipment != null) {
             trackings = trackingService.getTrackingsByShipmentId(shipment.getId());
         }
-        
+
         model.addAttribute("order", order);
         model.addAttribute("packages", packages);
         model.addAttribute("trackings", trackings);
-        
+
         return "admin/order-detail";
     }
-    
-    
-    
+
     @GetMapping("/warehouses")
     public String warehouses(Model model) {
-        // List<Warehouse> warehouses = warehouseService.findAll();
-        // model.addAttribute("warehouses", warehouses);
         return "admin/warehouses";
     }
+
     @GetMapping("/warehouses/{id}")
     public String warehouseDetail(@PathVariable Long id, Model model) {
         model.addAttribute("warehouseId", id);

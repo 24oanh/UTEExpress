@@ -11,15 +11,13 @@ import java.util.List;
 
 @Repository
 public interface OutboundReceiptRepository extends JpaRepository<OutboundReceipt, Long> {
-    
     List<OutboundReceipt> findByWarehouseId(Long warehouseId);
-    
+
+    List<OutboundReceipt> findByOrderId(Long orderId);
+
     @Query("SELECT or FROM OutboundReceipt or WHERE or.warehouse.id = :warehouseId AND or.issuedDate BETWEEN :startDate AND :endDate")
-    List<OutboundReceipt> findByWarehouseIdAndDateRange(@Param("warehouseId") Long warehouseId,
-                                                        @Param("startDate") LocalDateTime startDate,
-                                                        @Param("endDate") LocalDateTime endDate);
-    
-    @Query("SELECT or FROM OutboundReceipt or WHERE or.warehouse.id = :warehouseId AND or.issuedDate > :date")
-    List<OutboundReceipt> findByWarehouseIdAndIssuedDateAfter(@Param("warehouseId") Long warehouseId,
-                                                              @Param("date") LocalDateTime date);
+    List<OutboundReceipt> findByWarehouseIdAndDateRange(
+            @Param("warehouseId") Long warehouseId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
 }

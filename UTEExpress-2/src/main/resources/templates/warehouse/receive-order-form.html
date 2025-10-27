@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Nhập kho - Nhận đơn hàng</title>
+    <link rel="stylesheet" th:href="@{/css/warehouse.css}">
+    <style>
+        .receipt-form {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+
+        .form-section:last-child {
+            border-bottom: none;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .info-item {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #7f8c8d;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            color: #2c3e50;
+            font-size: 15px;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div th:replace="~{fragments/warehouse-header :: header}"></div>
+
+    <div class="container">
+        <div class="receipt-form">
+            <h1 style="text-align: center; margin-bottom: 30px;">
+                <i class="fas fa-warehouse"></i> Nhập kho - Nhận đơn hàng
+            </h1>
+
+            <div class="alert-info">
+                <strong>📦 Lưu ý:</strong> Vui lòng kiểm tra kỹ thông tin đơn hàng trước khi xác nhận nhập kho.
+            </div>
+
+            <form th:action="@{/warehouse/inbound/receive-order/{orderId}(orderId=${orderId})}" method="post"
+                onsubmit="return confirm('Xác nhận nhập kho cho đơn hàng này?');">
+
+                <div class="form-section">
+                    <div class="section-title">📋 Thông tin kho</div>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Mã kho</div>
+                            <div class="info-value" th:text="${warehouse.code}"></div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Tên kho</div>
+                            <div class="info-value" th:text="${warehouse.name}"></div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Địa chỉ</div>
+                            <div class="info-value" th:text="${warehouse.address}"></div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Tồn kho hiện tại</div>
+                            <div class="info-value"
+                                th:text="${warehouse.currentStock} + ' / ' + ${warehouse.totalCapacity}"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="section-title">📦 Thông tin đơn hàng</div>
+                    <p style="color: #7f8c8d; font-size: 14px; margin-bottom: 15px;">
+                        Thông tin chi tiết sẽ được hiển thị sau khi xác nhận
+                    </p>
+                </div>
+
+                <div class="form-actions" style="display: flex; gap: 15px; justify-content: center; margin-top: 30px;">
+                    <button type="submit" class="btn-primary" style="padding: 12px 40px; font-size: 16px;">
+                        <i class="fas fa-check"></i> Xác nhận nhập kho
+                    </button>
+                    <a th:href="@{/warehouse/orders/{id}(id=${orderId})}" class="btn-secondary"
+                        style="padding: 12px 40px; font-size: 16px;">
+                        <i class="fas fa-times"></i> Hủy
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+
+</html>
