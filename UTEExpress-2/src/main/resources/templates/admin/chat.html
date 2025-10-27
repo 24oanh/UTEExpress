@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -60,7 +61,8 @@
             text-decoration: none;
         }
 
-        .nav-link:hover, .nav-link.active {
+        .nav-link:hover,
+        .nav-link.active {
             background: rgba(255, 255, 255, 0.1);
             color: white;
             transform: translateX(5px);
@@ -201,7 +203,7 @@
             background: white;
             padding: 12px 16px;
             border-radius: 18px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
         }
 
         .message.sent .message-bubble {
@@ -259,46 +261,70 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="logo">
-            <h3><i class="fas fa-shipping-fast"></i> UTEExpress</h3>
+            <div class="logo-icon">
+                <i class="fas fa-shipping-fast"></i>
+            </div>
+            <h3>UTEExpress</h3>
             <span>Admin Panel</span>
         </div>
+
         <nav class="sidebar-nav">
             <div class="nav-item">
-                <a href="/admin/dashboard" class="nav-link">
+                <a href="/admin/dashboard" class="nav-link active">
                     <i class="fas fa-home"></i>
                     <span>Dashboard</span>
                 </a>
             </div>
+
             <div class="nav-item">
                 <a href="/admin/users" class="nav-link">
                     <i class="fas fa-users"></i>
                     <span>Quản lý User</span>
                 </a>
             </div>
+
             <div class="nav-item">
                 <a href="/admin/orders" class="nav-link">
                     <i class="fas fa-box"></i>
                     <span>Đơn hàng</span>
                 </a>
             </div>
+
             <div class="nav-item">
-			    <a href="/admin/chat" class="nav-link active">
-			        <i class="fas fa-comments"></i>
-			        <span>Chat</span>
-			    </a>
-			    <span class="badge bg-danger ms-2" id="chatBadge" style="display: none; position: absolute; right: 20px; top: 50%; transform: translateY(-50%);">0</span>
-			</div>
-			<div class="nav-item">
-			    <a href="/admin/notifications" class="nav-link">
-			        <i class="fas fa-bell"></i>
-			        <span>Thông báo</span>
-			    </a>
-			    <span class="badge bg-danger ms-2" id="notifBadge" style="display: none; position: absolute; right: 20px; top: 50%; transform: translateY(-50%);">0</span>
-			</div>
+                <a href="/admin/warehouses" class="nav-link">
+                    <i class="fas fa-warehouse"></i>
+                    <span>Kho hàng</span>
+                </a>
+            </div>
+
+            <div class="nav-item">
+                <a href="/admin/chat" class="nav-link">
+                    <i class="fas fa-comments"></i>
+                    <span>Chat</span>
+                    <span class="badge-notif">3</span>
+                </a>
+            </div>
+
+            <div class="nav-item">
+                <a href="/admin/notifications" class="nav-link">
+                    <i class="fas fa-bell"></i>
+                    <span>Thông báo</span>
+                    <span class="badge-notif">6</span>
+                </a>
+            </div>
+
+            <div class="nav-item">
+                <a href="/admin/reports" class="nav-link">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Báo cáo</span>
+                </a>
+            </div>
+
             <div class="nav-item">
                 <a href="/logout" class="nav-link">
                     <i class="fas fa-sign-out-alt"></i>
@@ -320,16 +346,14 @@
                 <div class="p-3 border-bottom">
                     <input type="text" class="form-control" placeholder="Tìm kiếm..." id="searchInput">
                 </div>
-                
+
                 <div id="conversationsList">
                     <div th:if="${conversations.empty}" class="text-center py-5">
                         <p class="text-muted">Chưa có cuộc trò chuyện nào</p>
                     </div>
-                    
-                    <div th:each="conv : ${conversations}" 
-                         class="conversation-item"
-                         th:attr="data-id=${conv.id}"
-                         onclick="loadConversation(this.dataset.id)">
+
+                    <div th:each="conv : ${conversations}" class="conversation-item" th:attr="data-id=${conv.id}"
+                        onclick="loadConversation(this.dataset.id)">
                         <div class="conversation-avatar">
                             <i class="fas fa-user"></i>
                         </div>
@@ -337,8 +361,8 @@
                             <div class="fw-bold" th:text="${conv.customer.fullName}"></div>
                             <small class="text-muted" th:text="${conv.lastMessage}"></small>
                         </div>
-                        <div th:if="${conv.unreadSupportCount > 0}" class="unread-badge" 
-                             th:text="${conv.unreadSupportCount}"></div>
+                        <div th:if="${conv.unreadSupportCount > 0}" class="unread-badge"
+                            th:text="${conv.unreadSupportCount}"></div>
                     </div>
                 </div>
             </div>
@@ -364,17 +388,16 @@
                     <div class="chat-messages" id="chatMessages"></div>
 
                     <div class="chat-input-area">
-					    <form id="chatForm" onsubmit="sendMessage(event)">
-					        <div class="input-group">
-					            <textarea class="chat-input" id="messageInput"
-					                placeholder="Nhập tin nhắn..." rows="1"
-					                onkeypress="if(event.keyCode==13 && !event.shiftKey){event.preventDefault();sendMessage(event);}"></textarea>
-					            <button type="submit" class="btn-send">
-					                <i class="fas fa-paper-plane"></i> Gửi
-					            </button>
-					        </div>
-					    </form>
-					</div>
+                        <form id="chatForm" onsubmit="sendMessage(event)">
+                            <div class="input-group">
+                                <textarea class="chat-input" id="messageInput" placeholder="Nhập tin nhắn..." rows="1"
+                                    onkeypress="if(event.keyCode==13 && !event.shiftKey){event.preventDefault();sendMessage(event);}"></textarea>
+                                <button type="submit" class="btn-send">
+                                    <i class="fas fa-paper-plane"></i> Gửi
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -384,110 +407,110 @@
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
     // Thay thế toàn bộ phần script trong admin/chat.html
-	<script>
-	let stompClient = null;
-	let currentConversationId = null;
-	
-	function connect() {
-	    const socket = new SockJS('/ws');
-	    stompClient = Stomp.over(socket);
-	    
-	    stompClient.connect({}, function(frame) {
-	        console.log('Connected: ' + frame);
-	        
-	        stompClient.subscribe('/topic/admin/chat', function(message) {
-	            const data = JSON.parse(message.body);
-	            if (data.conversationId === currentConversationId) {
-	                displayMessage(data);
-	            }
-	            updateConversationsList();
-	            updateUnreadCount();
-	        });
-	    });
-	}
-	
-	function loadConversation(conversationId) {
-	    currentConversationId = conversationId;
-	    
-	    fetch(`/admin/chat/conversation/${conversationId}`)
-	        .then(response => response.json())
-	        .then(data => {
-	            document.getElementById('emptyState').style.display = 'none';
-	            document.getElementById('chatArea').style.display = 'flex';
-	            
-	            document.getElementById('customerName').textContent = data.customer.fullName;
-	            document.getElementById('customerEmail').textContent = data.customer.email;
-	            
-	            const messagesDiv = document.getElementById('chatMessages');
-	            messagesDiv.innerHTML = '';
-	            
-	            data.messages.forEach(msg => displayMessage(msg));
-	            scrollToBottom();
-	            
-	            markAsRead(conversationId);
-	            
-	            // Highlight active conversation
-	            document.querySelectorAll('.conversation-item').forEach(item => {
-	                item.classList.remove('active');
-	            });
-	            document.querySelector(`[data-id="${conversationId}"]`)?.classList.add('active');
-	        });
-	}
-	
-	function sendMessage(event) {
-	    event.preventDefault();
-	    
-	    const messageInput = document.getElementById('messageInput');
-	    const message = messageInput.value.trim();
-	    
-	    if (!message) {
-	        alert('Vui lòng nhập tin nhắn!');
-	        return;
-	    }
-	    
-	    if (!currentConversationId) {
-	        alert('Vui lòng chọn cuộc trò chuyện!');
-	        return;
-	    }
-	    
-	    const formData = new FormData();
-	    formData.append('conversationId', currentConversationId);
-	    formData.append('message', message);
-	    
-	    // Disable button while sending
-	    const sendBtn = event.target.querySelector('button[type="submit"]') || event.target.closest('form').querySelector('button[type="submit"]');
-	    if (sendBtn) sendBtn.disabled = true;
-	    
-	    fetch('/admin/chat/send', {
-	        method: 'POST',
-	        body: formData
-	    })
-	    .then(response => {
-	        if (!response.ok) throw new Error('Network error');
-	        return response.json();
-	    })
-	    .then(data => {
-	        messageInput.value = '';
-	        displayMessage(data);
-	        scrollToBottom();
-	    })
-	    .catch(error => {
-	        console.error('Error:', error);
-	        alert('Không thể gửi tin nhắn!');
-	    })
-	    .finally(() => {
-	        if (sendBtn) sendBtn.disabled = false;
-	        messageInput.focus();
-	    });
-	}
-	
-	function displayMessage(msg) {
-	    const messagesDiv = document.getElementById('chatMessages');
-	    
-	    const messageDiv = document.createElement('div');
-	    messageDiv.className = msg.senderType === 'SUPPORT' ? 'message sent' : 'message';
-	    
-	    messageDiv.innerHTML = `
+    <script>
+        let stompClient = null;
+        let currentConversationId = null;
+
+        function connect() {
+            const socket = new SockJS('/ws');
+            stompClient = Stomp.over(socket);
+
+            stompClient.connect({}, function (frame) {
+                console.log('Connected: ' + frame);
+
+                stompClient.subscribe('/topic/admin/chat', function (message) {
+                    const data = JSON.parse(message.body);
+                    if (data.conversationId === currentConversationId) {
+                        displayMessage(data);
+                    }
+                    updateConversationsList();
+                    updateUnreadCount();
+                });
+            });
+        }
+
+        function loadConversation(conversationId) {
+            currentConversationId = conversationId;
+
+            fetch(`/admin/chat/conversation/${conversationId}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('emptyState').style.display = 'none';
+                    document.getElementById('chatArea').style.display = 'flex';
+
+                    document.getElementById('customerName').textContent = data.customer.fullName;
+                    document.getElementById('customerEmail').textContent = data.customer.email;
+
+                    const messagesDiv = document.getElementById('chatMessages');
+                    messagesDiv.innerHTML = '';
+
+                    data.messages.forEach(msg => displayMessage(msg));
+                    scrollToBottom();
+
+                    markAsRead(conversationId);
+
+                    // Highlight active conversation
+                    document.querySelectorAll('.conversation-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    document.querySelector(`[data-id="${conversationId}"]`)?.classList.add('active');
+                });
+        }
+
+        function sendMessage(event) {
+            event.preventDefault();
+
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+
+            if (!message) {
+                alert('Vui lòng nhập tin nhắn!');
+                return;
+            }
+
+            if (!currentConversationId) {
+                alert('Vui lòng chọn cuộc trò chuyện!');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('conversationId', currentConversationId);
+            formData.append('message', message);
+
+            // Disable button while sending
+            const sendBtn = event.target.querySelector('button[type="submit"]') || event.target.closest('form').querySelector('button[type="submit"]');
+            if (sendBtn) sendBtn.disabled = true;
+
+            fetch('/admin/chat/send', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error('Network error');
+                    return response.json();
+                })
+                .then(data => {
+                    messageInput.value = '';
+                    displayMessage(data);
+                    scrollToBottom();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Không thể gửi tin nhắn!');
+                })
+                .finally(() => {
+                    if (sendBtn) sendBtn.disabled = false;
+                    messageInput.focus();
+                });
+        }
+
+        function displayMessage(msg) {
+            const messagesDiv = document.getElementById('chatMessages');
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = msg.senderType === 'SUPPORT' ? 'message sent' : 'message';
+
+            messageDiv.innerHTML = `
 	        <div class="message-avatar">
 	            <i class="${msg.senderType === 'SUPPORT' ? 'fas fa-user-tie' : 'fas fa-user'}"></i>
 	        </div>
@@ -496,81 +519,82 @@
 	            <div class="message-time">${new Date(msg.createdAt).toLocaleString('vi-VN')}</div>
 	        </div>
 	    `;
-	    
-	    messagesDiv.appendChild(messageDiv);
-	}
-	
-	function scrollToBottom() {
-	    const messagesDiv = document.getElementById('chatMessages');
-	    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-	}
-	
-	function markAsRead(conversationId) {
-	    fetch(`/admin/chat/conversation/${conversationId}/mark-read`, {
-	        method: 'POST'
-	    });
-	}
-	
-	function closeConversation() {
-	    if (!currentConversationId) return;
-	    
-	    if (confirm('Bạn có chắc muốn đóng cuộc trò chuyện này?')) {
-	        fetch(`/admin/chat/conversation/${currentConversationId}/close`, {
-	            method: 'POST'
-	        })
-	        .then(() => {
-	            currentConversationId = null;
-	            document.getElementById('emptyState').style.display = 'flex';
-	            document.getElementById('chatArea').style.display = 'none';
-	            updateConversationsList();
-	        });
-	    }
-	}
-	
-	function updateConversationsList() {
-	    fetch('/admin/chat')
-	        .then(response => response.text())
-	        .then(html => {
-	            const parser = new DOMParser();
-	            const doc = parser.parseFromString(html, 'text/html');
-	            const newList = doc.getElementById('conversationsList');
-	            if (newList) {
-	                document.getElementById('conversationsList').innerHTML = newList.innerHTML;
-	            }
-	        });
-	}
-	
-	function updateUnreadCount() {
-	    fetch('/admin/chat/unread-count')
-	        .then(response => response.json())
-	        .then(data => {
-	            const badge = document.getElementById('chatBadge');
-	            if (badge && data.unreadCount > 0) {
-	                badge.textContent = data.unreadCount;
-	                badge.style.display = 'inline';
-	            } else if (badge) {
-	                badge.style.display = 'none';
-	            }
-	        });
-	    
-	    fetch('/admin/notifications/unread-count')
-	        .then(response => response.json())
-	        .then(data => {
-	            const badge = document.getElementById('notifBadge');
-	            if (badge && data.unreadCount > 0) {
-	                badge.textContent = data.unreadCount;
-	                badge.style.display = 'inline';
-	            } else if (badge) {
-	                badge.style.display = 'none';
-	            }
-	        });
-	}
-	
-	window.onload = function() {
-	    connect();
-	    updateUnreadCount();
-	    setInterval(updateUnreadCount, 30000);
-	};
-	</script>
+
+            messagesDiv.appendChild(messageDiv);
+        }
+
+        function scrollToBottom() {
+            const messagesDiv = document.getElementById('chatMessages');
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function markAsRead(conversationId) {
+            fetch(`/admin/chat/conversation/${conversationId}/mark-read`, {
+                method: 'POST'
+            });
+        }
+
+        function closeConversation() {
+            if (!currentConversationId) return;
+
+            if (confirm('Bạn có chắc muốn đóng cuộc trò chuyện này?')) {
+                fetch(`/admin/chat/conversation/${currentConversationId}/close`, {
+                    method: 'POST'
+                })
+                    .then(() => {
+                        currentConversationId = null;
+                        document.getElementById('emptyState').style.display = 'flex';
+                        document.getElementById('chatArea').style.display = 'none';
+                        updateConversationsList();
+                    });
+            }
+        }
+
+        function updateConversationsList() {
+            fetch('/admin/chat')
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newList = doc.getElementById('conversationsList');
+                    if (newList) {
+                        document.getElementById('conversationsList').innerHTML = newList.innerHTML;
+                    }
+                });
+        }
+
+        function updateUnreadCount() {
+            fetch('/admin/chat/unread-count')
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.getElementById('chatBadge');
+                    if (badge && data.unreadCount > 0) {
+                        badge.textContent = data.unreadCount;
+                        badge.style.display = 'inline';
+                    } else if (badge) {
+                        badge.style.display = 'none';
+                    }
+                });
+
+            fetch('/admin/notifications/unread-count')
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.getElementById('notifBadge');
+                    if (badge && data.unreadCount > 0) {
+                        badge.textContent = data.unreadCount;
+                        badge.style.display = 'inline';
+                    } else if (badge) {
+                        badge.style.display = 'none';
+                    }
+                });
+        }
+
+        window.onload = function () {
+            connect();
+            updateUnreadCount();
+            setInterval(updateUnreadCount, 30000);
+        };
+    </script>
 </body>
+
 </html>
