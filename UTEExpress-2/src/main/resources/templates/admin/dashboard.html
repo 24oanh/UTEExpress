@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - UTEExpress</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --sidebar-width: 260px;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #ecf0f1;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: var(--sidebar-width);
+            background: linear-gradient(135deg, var(--primary-color) 0%, #34495e 100%);
+            box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        .sidebar .logo {
+            padding: 25px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+        .sidebar .logo h3 {
+            color: white;
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+        }
+        .sidebar .logo span {
+            color: var(--secondary-color);
+            font-size: 12px;
+            display: block;
+            margin-top: 5px;
+        }
+        .sidebar-nav {
+            padding: 20px 0;
+        }
+        .nav-item {
+            margin: 5px 15px;
+        }
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 12px 20px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+        .nav-link:hover, .nav-link.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: translateX(5px);
+        }
+        .nav-link i {
+            width: 20px;
+            margin-right: 12px;
+            font-size: 16px;
+        }
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 0;
+        }
+        .topbar {
+            background: white;
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+        .topbar h4 {
+            margin: 0;
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+        .content-area {
+            padding: 30px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--primary-color);
+        }
+        .stat-card.primary::before {
+            background: var(--primary-color);
+        }
+        .stat-card.success::before {
+            background: var(--success-color);
+        }
+        .stat-card.warning::before {
+            background: var(--warning-color);
+        }
+        .stat-card.danger::before {
+            background: var(--danger-color);
+        }
+        .stat-card.info::before {
+            background: var(--secondary-color);
+        }
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+        .stat-card.primary .stat-icon {
+            background: rgba(44, 62, 80, 0.1);
+            color: var(--primary-color);
+        }
+        .stat-card.success .stat-icon {
+            background: rgba(39, 174, 96, 0.1);
+            color: var(--success-color);
+        }
+        .stat-card.warning .stat-icon {
+            background: rgba(243, 156, 18, 0.1);
+            color: var(--warning-color);
+        }
+        .stat-card.danger .stat-icon {
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--danger-color);
+        }
+        .stat-card.info .stat-icon {
+            background: rgba(52, 152, 219, 0.1);
+            color: var(--secondary-color);
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 10px 0;
+        }
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+        }
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        .btn-custom {
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .btn-custom:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+        .quick-action-btn {
+            background: white;
+            border: 2px solid #ecf0f1;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+            text-decoration: none;
+            color: var(--primary-color);
+        }
+        .quick-action-btn:hover {
+            border-color: var(--secondary-color);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.2);
+        }
+        .quick-action-btn i {
+            font-size: 32px;
+            color: var(--secondary-color);
+            margin-bottom: 10px;
+        }
+        .quick-action-btn span {
+            display: block;
+            font-weight: 600;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">
+            <h3>
+                <i class="fas fa-shipping-fast"></i> UTEExpress
+            </h3>
+            <span>Admin Panel</span>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-item">
+                <a href="/admin/dashboard" class="nav-link active">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="/admin/users" class="nav-link">
+                    <i class="fas fa-users"></i>
+                    <span>Quản lý User</span>
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="/admin/orders" class="nav-link">
+                    <i class="fas fa-box"></i>
+                    <span>Đơn hàng</span>
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="/admin/warehouses" class="nav-link">
+                    <i class="fas fa-warehouse"></i>
+                    <span>Kho hàng</span>
+                </a>
+            </div>
+            <div class="nav-item">
+			    <a href="/admin/chat" class="nav-link">
+			        <i class="fas fa-comments"></i>
+			        <span>Chat</span>
+			    </a>
+			    <span class="badge bg-danger ms-2" th:if="${unreadChats > 0}" 
+			          th:text="${unreadChats}">0</span>
+			</div>
+			
+			<div class="nav-item">
+			    <a href="/admin/notifications" class="nav-link">
+			        <i class="fas fa-bell"></i>
+			        <span>Thông báo</span>
+			    </a>
+			    <span class="badge bg-danger ms-2" th:if="${unreadNotifications > 0}" 
+			          th:text="${unreadNotifications}">0</span>
+			</div>
+            <div class="nav-item">
+                <a href="/admin/reports" class="nav-link">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Báo cáo</span>
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="/logout" class="nav-link">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Đăng xuất</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Topbar -->
+        <div class="topbar">
+            <h4>Dashboard Overview</h4>
+            <div class="user-info">
+                <div>
+                    <strong th:text="${admin != null ? admin.fullName : 'Admin'}">Admin</strong>
+                    <small class="d-block text-muted">Administrator</small>
+                </div>
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- Statistics Cards -->
+		<div class="stats-grid">
+		    <!-- Existing user stats -->
+		    <div class="stat-card primary">
+		        <div class="stat-icon">
+		            <i class="fas fa-users"></i>
+		        </div>
+		        <div class="stat-value" th:text="${totalUsers != null ? totalUsers : 0}">0</div>
+		        <div class="stat-label">Tổng Users</div>
+		    </div>
+		    
+		    <!-- ✅ THÊM: Order statistics cards -->
+		    <div class="stat-card info">
+		        <div class="stat-icon">
+		            <i class="fas fa-box"></i>
+		        </div>
+		        <div class="stat-value" th:text="${totalOrders != null ? totalOrders : 0}">0</div>
+		        <div class="stat-label">Tổng Đơn Hàng</div>
+		    </div>
+		    
+		    <div class="stat-card warning">
+		        <div class="stat-icon">
+		            <i class="fas fa-clock"></i>
+		        </div>
+		        <div class="stat-value" th:text="${pendingOrders != null ? pendingOrders : 0}">0</div>
+		        <div class="stat-label">Chờ Giao</div>
+		    </div>
+		    
+		    <div class="stat-card success">
+		        <div class="stat-icon">
+		            <i class="fas fa-check-circle"></i>
+		        </div>
+		        <div class="stat-value" th:text="${completedOrders != null ? completedOrders : 0}">0</div>
+		        <div class="stat-label">Hoàn Thành</div>
+		    </div>
+		    
+		    <div class="stat-card danger">
+		        <div class="stat-icon">
+		            <i class="fas fa-times-circle"></i>
+		        </div>
+		        <div class="stat-value" th:text="${failedOrders != null ? failedOrders : 0}">0</div>
+		        <div class="stat-label">Thất Bại/Hủy</div>
+		    </div>
+		    
+		    <!-- ✅ THÊM: Revenue card -->
+		    <div class="stat-card" style="border-left-color: #27ae60;">
+		        <div class="stat-icon" style="background: rgba(39, 174, 96, 0.1); color: #27ae60;">
+		            <i class="fas fa-dollar-sign"></i>
+		        </div>
+		        <div class="stat-value" th:text="${totalRevenue != null ? #numbers.formatDecimal(totalRevenue, 0, 'COMMA', 0, 'POINT') + ' đ' : '0 đ'}">0 đ</div>
+		        <div class="stat-label">Doanh Thu</div>
+		    </div>
+		</div>
+		
+		<!-- ✅ THÊM: Recent Orders Section -->
+		<div class="chart-container">
+		    <div class="chart-header">
+		        <h5 class="chart-title"><i class="fas fa-box me-2"></i>Đơn Hàng Gần Đây</h5>
+		        <a th:href="@{/admin/orders}" class="btn btn-sm btn-primary">
+		            Xem Tất Cả <i class="fas fa-arrow-right ms-1"></i>
+		        </a>
+		    </div>
+		    <div class="table-responsive" th:if="${recentOrders != null and !recentOrders.isEmpty()}">
+		        <table class="table table-hover">
+		            <thead>
+		                <tr>
+		                    <th>Mã Đơn</th>
+		                    <th>Khách Hàng</th>
+		                    <th>Dịch Vụ</th>
+		                    <th>Trạng Thái</th>
+		                    <th>Ngày Tạo</th>
+		                    <th>Phí</th>
+		                </tr>
+		            </thead>
+		            <tbody>
+		                <tr th:each="order : ${recentOrders}">
+		                    <td>
+		                        <a th:href="@{/admin/orders/{id}(id=${order.id})}" 
+		                           th:text="${order.orderCode}"
+		                           class="text-primary fw-bold"></a>
+		                    </td>
+		                    <td th:text="${order.customer != null ? order.customer.fullName : '-'}"></td>
+		                    <td>
+		                        <span th:text="${order.serviceType.name() == 'EXPRESS' ? 'Nhanh' : 
+		                                        (order.serviceType.name() == 'STANDARD' ? 'Chuẩn' : 'Tiết kiệm')}"></span>
+		                    </td>
+		                    <td>
+		                        <span class="badge" 
+		                              th:classappend="${order.status.name() == 'CHO_GIAO' ? 'bg-warning' :
+		                                              (order.status.name() == 'DANG_GIAO' ? 'bg-info' :
+		                                              (order.status.name() == 'HOAN_THANH' ? 'bg-success' : 'bg-danger'))}"
+		                              th:text="${order.status.name() == 'CHO_GIAO' ? 'Chờ Giao' :
+		                                       (order.status.name() == 'DANG_GIAO' ? 'Đang Giao' :
+		                                       (order.status.name() == 'HOAN_THANH' ? 'Hoàn Thành' : 'Thất Bại'))}">
+		                        </span>
+		                    </td>
+		                    <td th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+		                    <td th:text="${#numbers.formatDecimal(order.shipmentFee, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
+		                </tr>
+		            </tbody>
+		        </table>
+		    </div>
+		    <div th:if="${recentOrders == null or recentOrders.isEmpty()}" class="text-center py-5 text-muted">
+		        <i class="fas fa-inbox fa-3x mb-3"></i>
+		        <p>Chưa có đơn hàng nào</p>
+		    </div>
+		</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // User Chart
+        const userCtx = document.getElementById('userChart').getContext('2d');
+        new Chart(userCtx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'New Users',
+                    data: [12, 19, 15, 25, 22, 30, 28],
+                    borderColor: '#3498db',
+                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // User Distribution Chart
+        const distCtx = document.getElementById('userDistribution').getContext('2d');
+        const totalCustomers = /*[[${totalCustomers}]]*/ 0;
+        const totalShippers = /*[[${totalShippers}]]*/ 0;
+        const totalWarehouseStaff = /*[[${totalWarehouseStaff}]]*/ 0;
+        const totalUsers = /*[[${totalUsers}]]*/ 0;
+        
+        new Chart(distCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Customers', 'Shippers', 'Warehouse Staff', 'Others'],
+                datasets: [{
+                    data: [
+                        totalCustomers,
+                        totalShippers,
+                        totalWarehouseStaff,
+                        totalUsers - totalCustomers - totalShippers - totalWarehouseStaff
+                    ],
+                    backgroundColor: [
+                        '#f39c12',
+                        '#e74c3c',
+                        '#3498db',
+                        '#95a5a6'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

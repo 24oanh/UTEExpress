@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chi tiết đơn hàng</title>
+<link rel="stylesheet" th:href="@{/css/shipper.css}">
+<style>
+/* Upload Section */
+.upload-section {
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	padding: 25px;
+	border-radius: 12px;
+	margin-top: 25px;
+	color: white;
+	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.upload-section h3 {
+	color: white;
+	margin-bottom: 15px;
+	font-size: 1.3em;
+}
+
+/* Image Preview */
+.upload-preview {
+	margin-top: 15px;
+	max-width: 350px;
+	background: white;
+	padding: 10px;
+	border-radius: 8px;
+}
+
+.upload-preview img {
+	width: 100%;
+	border-radius: 8px;
+	border: 3px solid #667eea;
+}
+
+.proof-image-display {
+	max-width: 400px;
+	margin-top: 15px;
+	padding: 10px;
+	background: #f0f8ff;
+	border-radius: 8px;
+}
+
+.proof-image-display img {
+	width: 100%;
+	border-radius: 8px;
+	border: 3px solid #17a2b8;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Buttons */
+.camera-button {
+	display: inline-block;
+	padding: 12px 24px;
+	background: #4CAF50;
+	color: white;
+	border: none;
+	border-radius: 8px;
+	cursor: pointer;
+	font-weight: bold;
+	font-size: 16px;
+	transition: all 0.3s;
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.camera-button:hover {
+	background: #45a049;
+	transform: translateY(-2px);
+	box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.camera-button:active {
+	transform: translateY(0);
+}
+
+.btn-fail {
+	background: #dc3545;
+	color: white;
+	padding: 12px 24px;
+	border: none;
+	border-radius: 8px;
+	font-weight: bold;
+	cursor: pointer;
+	transition: all 0.3s;
+}
+
+.btn-fail:hover {
+	background: #c82333;
+	transform: translateY(-2px);
+}
+
+.btn-location {
+	background: #007bff;
+	color: white;
+	padding: 12px 24px;
+	border: none;
+	border-radius: 8px;
+	font-weight: bold;
+	cursor: pointer;
+	transition: all 0.3s;
+}
+
+.btn-location:hover {
+	background: #0056b3;
+	transform: translateY(-2px);
+}
+
+.map-button {
+	display: inline-block;
+	padding: 10px 20px;
+	background: #007bff;
+	color: white;
+	border: none;
+	border-radius: 8px;
+	cursor: pointer;
+	text-decoration: none;
+	transition: all 0.3s;
+	margin-top: 10px;
+}
+
+.map-button:hover {
+	background: #0056b3;
+	transform: translateY(-2px);
+}
+
+/* Form Groups */
+.form-group {
+	margin-bottom: 20px;
+}
+
+.form-group label {
+	display: block;
+	margin-bottom: 8px;
+	font-weight: bold;
+	color: white;
+}
+
+.form-group textarea {
+	width: 100%;
+	padding: 12px;
+	border: 2px solid rgba(255, 255, 255, 0.3);
+	border-radius: 8px;
+	font-size: 14px;
+	background: rgba(255, 255, 255, 0.9);
+	color: #333;
+	box-sizing: border-box;
+}
+
+.form-group textarea:focus {
+	outline: none;
+	border-color: #4CAF50;
+	background: white;
+}
+
+/* Action Sections */
+.action-section {
+	background: #f8f9fa;
+	padding: 20px;
+	border-radius: 12px;
+	margin-top: 20px;
+	border: 2px solid #e9ecef;
+}
+
+.action-section h3 {
+	color: #495057;
+	margin-bottom: 15px;
+}
+
+.action-buttons {
+	display: flex;
+	gap: 10px;
+	margin-top: 20px;
+	flex-wrap: wrap;
+}
+
+.location-update-section {
+	background: #e7f3ff;
+	padding: 20px;
+	border-radius: 12px;
+	margin-top: 20px;
+	border: 2px solid #007bff;
+}
+
+.location-update-section h3 {
+	color: #004085;
+	margin-bottom: 15px;
+}
+
+.fail-section {
+	background: #fff3cd;
+	padding: 20px;
+	border-radius: 12px;
+	margin-top: 20px;
+	border: 2px solid #ffc107;
+}
+
+.fail-section h3 {
+	color: #856404;
+	margin-bottom: 15px;
+}
+
+.fail-section .form-group label {
+	color: #856404;
+}
+
+/* Status Indicators */
+.status-indicator {
+	display: inline-block;
+	padding: 8px 16px;
+	border-radius: 20px;
+	font-weight: bold;
+	margin: 10px 0;
+}
+
+.status-pending {
+	background: #fff3cd;
+	color: #856404;
+}
+
+.status-transit, .status-in_transit {
+	background: #d1ecf1;
+	color: #0c5460;
+}
+
+.status-delivered {
+	background: #d4edda;
+	color: #155724;
+}
+
+.status-failed {
+	background: #f8d7da;
+	color: #721c24;
+}
+
+/* Messages */
+.success-message {
+	background: #d4edda;
+	color: #155724;
+	padding: 15px;
+	border-radius: 8px;
+	margin-bottom: 20px;
+	border: 1px solid #c3e6cb;
+}
+
+.error-message {
+	background: #f8d7da;
+	color: #721c24;
+	padding: 15px;
+	border-radius: 8px;
+	margin-bottom: 20px;
+	border: 1px solid #f5c6cb;
+}
+
+#location-status {
+	margin-top: 10px;
+	padding: 10px;
+	border-radius: 5px;
+	font-weight: bold;
+}
+
+/* Timeline */
+.timeline {
+	position: relative;
+	padding: 20px 0;
+	margin-bottom: 30px;
+}
+
+.timeline-item {
+	display: flex;
+	gap: 15px;
+	margin-bottom: 20px;
+	position: relative;
+}
+
+.timeline-icon {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 20px;
+	flex-shrink: 0;
+}
+
+.timeline-content {
+	flex: 1;
+	padding: 15px;
+	background: white;
+	border-radius: 8px;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.step-completed .timeline-icon {
+	background: #28a745;
+	color: white;
+}
+
+.step-active .timeline-icon {
+	background: #ffc107;
+	color: white;
+}
+
+.step-pending .timeline-icon {
+	background: #6c757d;
+	color: white;
+}
+
+/* Warning Section */
+.warning-section {
+	background: #fff3cd;
+	padding: 20px;
+	border-radius: 10px;
+	border: 2px solid #ffc107;
+	margin-top: 20px;
+}
+
+.warning-section h3 {
+	color: #856404;
+	margin-bottom: 10px;
+}
+
+.warning-section p {
+	color: #856404;
+	margin: 0;
+}
+</style>
+</head>
+<body>
+	<div th:replace="~{fragments/shipper-header :: header}"></div>
+	
+	<div class="container">
+		<!-- Alert Messages -->
+		<div th:if="${success}" class="success-message" th:text="${success}"></div>
+		<div th:if="${error}" class="error-message" th:text="${error}"></div>
+
+		<!-- Page Header -->
+		<div class="page-header">
+			<h1>Chi tiết đơn hàng</h1>
+			<a th:href="@{/shipper/orders}" class="btn-secondary">← Quay lại</a>
+		</div>
+
+		<!-- Timeline Progress (chỉ hiển thị khi có shipment) -->
+		<div class="timeline" th:if="${shipment != null}">
+			<div class="timeline-item"
+				th:classappend="${shipment.pickupTime != null ? 'step-completed' : 'step-pending'}">
+				<div class="timeline-icon">📦</div>
+				<div class="timeline-content">
+					<strong>1. Nhận hàng từ kho</strong>
+					<p th:if="${shipment.pickupTime}"
+						th:text="'✓ ' + ${#temporals.format(shipment.pickupTime, 'dd/MM/yyyy HH:mm')}"></p>
+					<p th:unless="${shipment.pickupTime}" style="color: #6c757d;">Chưa nhận hàng</p>
+				</div>
+			</div>
+
+			<div class="timeline-item"
+				th:classappend="${shipment.status.name() == 'IN_TRANSIT' ? 'step-active' : (shipment.status.name() == 'DELIVERED' ? 'step-completed' : 'step-pending')}">
+				<div class="timeline-icon">🚚</div>
+				<div class="timeline-content">
+					<strong>2. Đang vận chuyển</strong>
+					<p th:if="${shipment.status.name() == 'IN_TRANSIT'}">⏳ Đang giao hàng</p>
+					<p th:if="${shipment.status.name() == 'DELIVERED'}">✓ Đã hoàn thành vận chuyển</p>
+					<p th:if="${shipment.status.name() == 'PENDING'}" style="color: #6c757d;">Chưa bắt đầu</p>
+				</div>
+			</div>
+
+			<div class="timeline-item"
+				th:classappend="${shipment.status.name() == 'DELIVERED' ? 'step-completed' : 'step-pending'}">
+				<div class="timeline-icon">✅</div>
+				<div class="timeline-content">
+					<strong>3. Giao hàng thành công</strong>
+					<p th:if="${shipment.deliveryTime}"
+						th:text="'✓ ' + ${#temporals.format(shipment.deliveryTime, 'dd/MM/yyyy HH:mm')}"></p>
+					<p th:unless="${shipment.deliveryTime}" style="color: #6c757d;">Chưa hoàn thành</p>
+				</div>
+			</div>
+		</div>
+
+		<!-- Thông tin đơn hàng -->
+		<div class="detail-grid">
+			<div class="detail-card">
+				<h3>📋 Thông tin đơn</h3>
+				<p><strong>Mã đơn:</strong> <span th:text="${order.orderCode}"></span></p>
+				<p><strong>Trạng thái:</strong> <span th:class="'badge badge-' + ${order.status}" th:text="${order.status}"></span></p>
+				<p><strong>Phí vận chuyển:</strong> <span th:text="${#numbers.formatDecimal(order.shipmentFee, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span></p>
+				<p><strong>Ghi chú:</strong> <span th:text="${order.notes ?: '-'}"></span></p>
+			</div>
+
+			<div class="detail-card">
+				<h3>📤 Người gửi</h3>
+				<p><strong>Tên:</strong> <span th:text="${order.senderName}"></span></p>
+				<p><strong>SĐT:</strong> <a th:href="'tel:' + ${order.senderPhone}" th:text="${order.senderPhone}" style="color: #007bff; text-decoration: none;">📞</a></p>
+				<p><strong>Địa chỉ:</strong> <span th:text="${order.senderAddress}"></span></p>
+			</div>
+
+			<div class="detail-card">
+				<h3>📥 Người nhận</h3>
+				<p><strong>Tên:</strong> <span th:text="${order.recipientName}"></span></p>
+				<p><strong>SĐT:</strong> <a th:href="'tel:' + ${order.recipientPhone}" th:text="${order.recipientPhone}" style="color: #007bff; text-decoration: none;">📞</a></p>
+				<p><strong>Địa chỉ:</strong> <span th:text="${order.recipientAddress}"></span></p>
+				<button onclick="openMap()" class="map-button">🗺️ Mở bản đồ</button>
+			</div>
+		</div>
+
+		<!-- Danh sách kiện hàng -->
+		<div class="section">
+			<h3>📦 Danh sách kiện hàng</h3>
+			<table>
+				<thead>
+					<tr>
+						<th>Mã kiện</th>
+						<th>Mô tả</th>
+						<th>Trọng lượng</th>
+						<th>Kích thước</th>
+						<th>Trạng thái</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:each="pkg : ${packages}">
+						<td th:text="${pkg.packageCode}"></td>
+						<td th:text="${pkg.description}"></td>
+						<td th:text="${pkg.weight} + ' kg'"></td>
+						<td th:text="${pkg.length} + 'x' + ${pkg.width} + 'x' + ${pkg.height} + ' cm'"></td>
+						<td><span th:class="'badge badge-' + ${pkg.status}" th:text="${pkg.status}"></span></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<!-- Thông tin giao hàng -->
+		<div class="section" th:if="${shipment != null}">
+			<h3>🚚 Thông tin giao hàng</h3>
+			<div class="detail-card">
+				<p><strong>Mã giao hàng:</strong> <span th:text="${shipment.shipmentCode}"></span></p>
+				<p><strong>Trạng thái:</strong> <span th:class="'status-indicator status-' + ${shipment.status.name().toLowerCase()}" th:text="${shipment.status}"></span></p>
+				<p th:if="${shipment.shipper != null}"><strong>Shipper:</strong> <span th:text="${shipment.shipper.name + ' (' + shipment.shipper.code + ')'}"></span></p>
+				<p th:if="${shipment.pickupTime}"><strong>⏰ Thời gian lấy:</strong> <span th:text="${#temporals.format(shipment.pickupTime, 'dd/MM/yyyy HH:mm')}"></span></p>
+				<p th:if="${shipment.deliveryTime}"><strong>✅ Thời gian giao:</strong> <span th:text="${#temporals.format(shipment.deliveryTime, 'dd/MM/yyyy HH:mm')}"></span></p>
+				<p th:if="${shipment.notes}"><strong>📝 Ghi chú:</strong> <span th:text="${shipment.notes}"></span></p>
+
+				<!-- Hiển thị ảnh đã upload -->
+				<div th:if="${shipment.proofImageUrl}" class="proof-image-display">
+					<strong>📸 Ảnh chứng từ đã giao:</strong><br>
+					<img th:src="${shipment.proofImageUrl}" alt="Ảnh chứng từ giao hàng">
+				</div>
+			</div>
+		</div>
+
+		<!-- ACTION 1: PENDING - Nhận hàng và bắt đầu -->
+		<div class="action-section" th:if="${shipment != null && shipment.status.name() == 'PENDING'}">
+			<h3>🎯 Hành động tiếp theo</h3>
+			<p style="color: #666; margin-bottom: 15px;">⚠️ Vui lòng nhận hàng từ kho và bắt đầu vận chuyển</p>
+			<div class="action-buttons">
+				<form th:action="@{/shipper/shipments/{id}/receive(id=${shipment.id})}" method="post" style="display: inline-block;">
+					<button type="submit" class="btn-primary">📦 1. Xác nhận nhận hàng</button>
+				</form>
+				<form th:action="@{/shipper/shipments/{id}/start(id=${shipment.id})}" method="post" style="display: inline-block;">
+					<button type="submit" class="btn-success">🚚 2. Bắt đầu vận chuyển</button>
+				</form>
+			</div>
+		</div>
+
+		<!-- ACTION 2: IN_TRANSIT - Upload ảnh và hoàn thành -->
+		<div class="upload-section" th:if="${shipment != null && shipment.status.name() == 'IN_TRANSIT'}">
+			<h3>📷 Hoàn thành giao hàng</h3>
+			<p style="margin-bottom: 15px; font-size: 14px;">✅ Đơn hàng đang vận chuyển. Vui lòng chụp ảnh xác nhận khi giao hàng thành công.</p>
+
+			<form th:action="@{/shipper/shipments/{id}/complete(id=${shipment.id})}" method="post" enctype="multipart/form-data" id="uploadProofForm">
+				<div class="form-group">
+					<label>📸 Ảnh chứng từ giao hàng *</label>
+					<button type="button" class="camera-button" onclick="document.getElementById('proofImageInput').click()">
+						📷 Chụp ảnh / Chọn từ thư viện
+					</button>
+					<input type="file" id="proofImageInput" name="proofImage" accept="image/*" capture="environment" style="display: none;" onchange="previewImage(this)" required>
+					<div id="imagePreview" class="upload-preview"></div>
+				</div>
+
+				<div class="form-group">
+					<label>📝 Ghi chú (tùy chọn)</label>
+					<textarea name="notes" rows="3" placeholder="Ghi chú về việc giao hàng (ví dụ: Đã giao cho người nhận, ký nhận đầy đủ...)"></textarea>
+				</div>
+
+				<button type="submit" class="btn-success btn-lg" style="width: 100%;">✓ Hoàn thành giao hàng</button>
+			</form>
+		</div>
+
+		<!-- ACTION 3: IN_TRANSIT - Cập nhật vị trí -->
+		<div class="location-update-section" th:if="${shipment != null && shipment.status.name() == 'IN_TRANSIT'}">
+			<h3>📍 Cập nhật vị trí</h3>
+			<p style="color: #004085; margin-bottom: 15px;">Cập nhật vị trí hiện tại để khách hàng theo dõi đơn hàng</p>
+			<button onclick="updateLocation()" class="btn-location">📡 Cập nhật vị trí hiện tại</button>
+			<div id="location-status"></div>
+		</div>
+
+		<!-- ACTION 4: Báo thất bại -->
+		<div class="fail-section" th:if="${shipment != null && shipment.status.name() == 'IN_TRANSIT'}">
+			<h3>⚠️ Báo giao hàng thất bại</h3>
+			<p style="color: #856404; margin-bottom: 15px;">Chỉ sử dụng khi không thể giao hàng (người nhận không có mặt, địa chỉ sai, từ chối nhận hàng...)</p>
+
+			<form th:action="@{/shipper/shipments/{id}/fail(id=${shipment.id})}" method="post" enctype="multipart/form-data" id="failForm" onsubmit="return confirm('⚠️ Xác nhận báo giao hàng THẤT BẠI?');">
+				<div class="form-group">
+					<label>📝 Lý do thất bại *</label>
+					<textarea name="notes" rows="3" required placeholder="Vui lòng mô tả chi tiết lý do không thể giao hàng..."></textarea>
+				</div>
+
+				<div class="form-group">
+					<label>📸 Ảnh minh chứng (nếu có)</label>
+					<button type="button" class="camera-button" style="background: #ffc107;" onclick="document.getElementById('failImageInput').click()">
+						📷 Chụp ảnh minh chứng
+					</button>
+					<input type="file" id="failImageInput" name="proofImage" accept="image/*" capture="environment" style="display: none;" onchange="previewFailImage(this)">
+					<div id="failImagePreview" class="upload-preview"></div>
+				</div>
+
+				<button type="submit" class="btn-fail" style="width: 100%;">⚠️ Xác nhận giao hàng thất bại</button>
+			</form>
+		</div>
+
+		<!-- Cảnh báo chưa có shipment -->
+		<div class="warning-section" th:if="${shipment == null}">
+			<h3>⚠️ Đơn hàng chưa có Shipment</h3>
+			<p>Vui lòng chờ warehouse tạo shipment cho đơn hàng này.</p>
+			
+			<!-- Nút tạo shipment cho warehouse (nếu cần) -->
+			<div th:if="${order.status.name() == 'CHO_GIAO'}" style="margin-top: 15px;">
+				<form th:action="@{/warehouse/orders/{id}/create-shipment(id=${order.id})}" method="post">
+					<button type="submit" class="btn-primary">📦 Tạo Shipment</button>
+				</form>
+			</div>
+		</div>
+	</div>
+
+	<script th:inline="javascript">
+		/*<![CDATA[*/
+		const orderRecipientAddress = /*[[${order.recipientAddress}]]*/ '';
+		const shipmentId = /*[[${shipment?.id}]]*/ null;
+		/*]]>*/
+
+		function openMap() {
+			if (!orderRecipientAddress) {
+				alert('⚠️ Không có địa chỉ người nhận');
+				return;
+			}
+			window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(orderRecipientAddress)}`, '_blank');
+		}
+
+		function previewImage(input) {
+			const preview = document.getElementById('imagePreview');
+			
+			if (input.files && input.files[0]) {
+				const file = input.files[0];
+				
+				// Kiểm tra kích thước file (max 5MB)
+				if (file.size > 5 * 1024 * 1024) {
+					alert('⚠️ Kích thước ảnh quá lớn. Vui lòng chọn ảnh nhỏ hơn 5MB');
+					input.value = '';
+					preview.innerHTML = '';
+					return;
+				}
+				
+				const reader = new FileReader();
+				reader.onload = function(e) {
+					preview.innerHTML = `
+						<img src="${e.target.result}" alt="Preview">
+						<p style="color: #28a745; margin-top: 10px; font-weight: bold; text-align: center;">
+							✓ Đã chọn ảnh
+						</p>
+					`;
+				}
+				reader.readAsDataURL(file);
+			}
+		}
+
+		function previewFailImage(input) {
+			const preview = document.getElementById('failImagePreview');
+			
+			if (input.files && input.files[0]) {
+				const file = input.files[0];
+				
+				// Kiểm tra kích thước file
+				if (file.size > 5 * 1024 * 1024) {
+					alert('⚠️ Kích thước ảnh quá lớn. Vui lòng chọn ảnh nhỏ hơn 5MB');
+					input.value = '';
+					preview.innerHTML = '';
+					return;
+				}
+				
+				const reader = new FileReader();
+				reader.onload = function(e) {
+					preview.innerHTML = `
+						<img src="${e.target.result}" alt="Preview">
+						<p style="color: #856404; margin-top: 10px; font-weight: bold; text-align: center;">
+							✓ Đã chọn ảnh minh chứng
+						</p>
+					`;
+				}
+				reader.readAsDataURL(file);
+			}
+		}
+
+		// Validate form upload
+		const uploadForm = document.getElementById('uploadProofForm');
+		if (uploadForm) {
+			uploadForm.addEventListener('submit', function(e) {
+				const fileInput = document.getElementById('proofImageInput');
+				if (!fileInput.files || !fileInput.files[0]) {
+					e.preventDefault();
+					alert('⚠️ Vui lòng chụp hoặc chọn ảnh chứng từ giao hàng!');
+					return false;
+				}
+			});
+		}
+
+		function updateLocation() {
+			const statusDiv = document.getElementById('location-status');
+			statusDiv.innerHTML = '<p style="color: #007bff;">⏳ Đang cập nhật vị trí...</p>';
+			
+			if (!navigator.geolocation) {
+				statusDiv.innerHTML = '<p style="color: #dc3545; padding: 10px; background: #f8d7da; border-radius: 5px;">❌ Trình duyệt không hỗ trợ định vị</p>';
+				return;
+			}
+			
+			navigator.geolocation.getCurrentPosition(
+				function(position) {
+					const data = new FormData();
+					data.append('latitude', position.coords.latitude);
+					data.append('longitude', position.coords.longitude);
+					if (shipmentId) {
+						data.append('shipmentId', shipmentId);
+					}
+
+					fetch('/shipper/location/update', {
+						method: 'POST',
+						body: data
+					})
+					.then(response => {
+						if (!response.ok) {
+							throw new Error('Network response was not ok');
+						}
+						return response.text();
+					})
+					.then(result => {
+						statusDiv.innerHTML = `
+							<p style="color: #28a745; font-weight: bold; padding: 10px; background: #d4edda; border-radius: 5px; margin-top: 10px;">
+								✓ Đã cập nhật vị trí thành công!<br>
+								<small>📍 Lat: ${position.coords.latitude.toFixed(6)}, Long: ${position.coords.longitude.toFixed(6)}</small>
+							</p>
+						`;
+					})
+					.catch(error => {
+						console.error('Error:', error);
+						statusDiv.innerHTML = `
+							<p style="color: #dc3545; font-weight: bold; padding: 10px; background: #f8d7da; border-radius: 5px; margin-top: 10px;">
+								✗ Lỗi cập nhật vị trí: ${error.message}
+							</p>
+						`;
+					});
+				},
+				function(error) {
+					let errorMsg = '';
+					switch(error.code) {
+						case error.PERMISSION_DENIED:
+							errorMsg = 'Người dùng từ chối quyền truy cập vị trí';
+							break;
+						case error.POSITION_UNAVAILABLE:
+							errorMsg = 'Thông tin vị trí không khả dụng';
+							break;
+						case error.TIMEOUT:
+							errorMsg = 'Yêu cầu lấy vị trí hết thời gian chờ';
+							break;
+						default:
+							errorMsg = 'Lỗi không xác định';
+					}
+					statusDiv.innerHTML = `
+						<p style="color: #dc3545; padding: 10px; background: #f8d7da; border-radius: 5px; margin-top: 10px;">
+							✗ Không thể lấy vị trí: ${errorMsg}
+						</p>
+					`;
+				},
+				{
+					enableHighAccuracy: true,
+					timeout: 10000,
+					maximumAge: 0
+				}
+			);
+		}
+	</script>
+</body>
+</html>

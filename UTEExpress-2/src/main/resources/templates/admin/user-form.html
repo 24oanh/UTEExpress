@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tạo User - UTEExpress</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --sidebar-width: 260px;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #ecf0f1;
+        }
+        
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: var(--sidebar-width);
+            background: linear-gradient(135deg, var(--primary-color) 0%, #34495e 100%);
+            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .sidebar .logo {
+            padding: 25px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+        
+        .sidebar .logo h3 {
+            color: white;
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
+        .sidebar-nav {
+            padding: 20px 0;
+        }
+        
+        .nav-item {
+            margin: 5px 15px;
+        }
+        
+        .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 12px 20px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+        
+        .nav-link i {
+            width: 20px;
+            margin-right: 12px;
+        }
+        
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 0;
+        }
+        
+        .topbar {
+            background: white;
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .content-area {
+            padding: 30px;
+        }
+        
+        .form-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .form-header {
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .form-header h3 {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin: 0;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            padding: 10px 15px;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+        
+        .invalid-feedback {
+            display: block;
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        .role-checkbox {
+            padding: 15px;
+            border: 2px solid #ecf0f1;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .role-checkbox:hover {
+            border-color: var(--secondary-color);
+            background: rgba(52, 152, 219, 0.05);
+        }
+        
+        .role-checkbox input[type="checkbox"]:checked + label {
+            color: var(--secondary-color);
+            font-weight: 600;
+        }
+        
+        .btn-submit {
+            background: var(--secondary-color);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .btn-submit:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+        
+        .role-specific-fields {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .role-specific-fields.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">
+            <h3><i class="fas fa-shipping-fast"></i> UTEExpress</h3>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-item">
+                <a href="/admin/dashboard" class="nav-link">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="/admin/users" class="nav-link active">
+                    <i class="fas fa-users"></i>
+                    <span>Quản lý User</span>
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="/logout" class="nav-link">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Đăng xuất</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="topbar">
+            <h4 class="mb-0">Tạo User Mới</h4>
+        </div>
+
+        <div class="content-area">
+            <div class="form-container">
+                <div class="form-header">
+                    <h3><i class="fas fa-user-plus me-2"></i>Thông tin User</h3>
+                </div>
+
+                <div th:if="${error}" class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <span th:text="${error}"></span>
+                </div>
+
+                <form th:action="@{/admin/users/create}" th:object="${userDTO}" method="post">
+                    <!-- Basic Information -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Username <span class="text-danger">*</span></label>
+                            <input type="text" th:field="*{username}" class="form-control" 
+                                   th:classappend="${#fields.hasErrors('username')} ? 'is-invalid' : ''">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('username')}" 
+                                 th:errors="*{username}"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email <span class="text-danger">*</span></label>
+                            <input type="email" th:field="*{email}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('email')} ? 'is-invalid' : ''">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('email')}" 
+                                 th:errors="*{email}"></div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Họ tên <span class="text-danger">*</span></label>
+                            <input type="text" th:field="*{fullName}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('fullName')} ? 'is-invalid' : ''">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('fullName')}" 
+                                 th:errors="*{fullName}"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
+                            <input type="text" th:field="*{phone}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('phone')} ? 'is-invalid' : ''">
+                            <div class="invalid-feedback" th:if="${#fields.hasErrors('phone')}" 
+                                 th:errors="*{phone}"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Mật khẩu <span class="text-danger">*</span></label>
+                        <input type="password" th:field="*{password}" class="form-control"
+                               th:classappend="${#fields.hasErrors('password')} ? 'is-invalid' : ''">
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('password')}" 
+                             th:errors="*{password}"></div>
+                        <small class="text-muted">Mật khẩu phải có ít nhất 6 ký tự</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Địa chỉ</label>
+                        <textarea th:field="*{address}" class="form-control" rows="2"></textarea>
+                    </div>
+
+                    <!-- Roles Selection -->
+                    <div class="mb-4">
+                        <label class="form-label">Vai trò <span class="text-danger">*</span></label>
+                        <div th:each="role, iterStat : ${roles}" class="role-checkbox">
+                            <div class="form-check">
+                                <input class="form-check-input role-check" type="checkbox" 
+                                       th:id="'role-' + ${iterStat.index}"
+                                       th:value="${role.ordinal()}"
+                                       th:field="*{roleIds}"
+                                       th:attr="data-role=${role.name()}">
+                                <label class="form-check-label" th:for="'role-' + ${iterStat.index}">
+                                    <strong th:text="${role.name()}"></strong>
+                                    <small class="d-block text-muted" th:text="${getRoleDescription(role)}"></small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('roleIds')}" 
+                             th:errors="*{roleIds}"></div>
+                    </div>
+
+                    <!-- Role-specific Fields -->
+                    <div id="shipperFields" class="role-specific-fields">
+                        <h5 class="mb-3"><i class="fas fa-truck me-2"></i>Thông tin Shipper</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Loại phương tiện</label>
+                                <input type="text" th:field="*{vehicleType}" class="form-control" 
+                                       placeholder="VD: Truck, Motorbike">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Biển số xe</label>
+                                <input type="text" th:field="*{vehicleNumber}" class="form-control" 
+                                       placeholder="VD: 29A-12345">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="warehouseFields" class="role-specific-fields">
+                        <h5 class="mb-3"><i class="fas fa-warehouse me-2"></i>Thông tin Kho</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Tên kho</label>
+                                <input type="text" th:field="*{warehouseName}" class="form-control">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Tổng sức chứa (kg)</label>
+                                <input type="number" th:field="*{totalCapacity}" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="d-flex gap-2 justify-content-end mt-4">
+                        <a href="/admin/users" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Hủy
+                        </a>
+                        <button type="submit" class="btn btn-submit">
+                            <i class="fas fa-save me-2"></i>Tạo User
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Show/hide role-specific fields
+        document.querySelectorAll('.role-check').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const role = this.getAttribute('data-role');
+                
+                if (role === 'ROLE_SHIPPER') {
+                    document.getElementById('shipperFields').classList.toggle('active', this.checked);
+                } else if (role === 'ROLE_WAREHOUSE_STAFF') {
+                    document.getElementById('warehouseFields').classList.toggle('active', this.checked);
+                }
+            });
+        });
+        
+        // Check on page load
+        document.querySelectorAll('.role-check:checked').forEach(checkbox => {
+            checkbox.dispatchEvent(new Event('change'));
+        });
+    </script>
+</body>
+</html>

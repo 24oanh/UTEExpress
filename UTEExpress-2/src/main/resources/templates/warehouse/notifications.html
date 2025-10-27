@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Thông báo</title>
+<link rel="stylesheet" th:href="@{/css/warehouse.css}">
+</head>
+<body>
+	<div th:replace="~{fragments/warehouse-header :: header}"></div>
+	<div class="container">
+		<div class="page-header">
+			<h1>Thông báo</h1>
+			<button onclick="markAllRead()" class="btn-secondary">Đánh
+				dấu đã đọc tất cả</button>
+		</div>
+
+		<div class="notification-list">
+			<div th:each="notif : ${notifications}"
+				th:class="${notif.isRead ? 'notification-item read' : 'notification-item unread'}">
+				<div class="notif-header">
+					<span th:class="'badge badge-' + ${notif.type}"
+						th:text="${notif.type}"></span> <span class="notif-time"
+						th:text="${#temporals.format(notif.createdAt, 'dd/MM HH:mm')}"></span>
+				</div>
+				<p class="notif-message" th:text="${notif.message}"></p>
+				<div class="notif-actions">
+					<a th:if="${notif.order != null}"
+						th:href="@{/warehouse/orders/{id}(id=${notif.order.id})}"
+						class="btn-sm">Xem đơn</a>
+					<button th:if="${!notif.isRead}"
+						th:onclick="'markRead(' + ${notif.id} + ')'" class="btn-sm">Đánh
+						dấu đã đọc</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script th:src="@{/js/notifications.js}"></script>
+</body>
+</html>
