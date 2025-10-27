@@ -1,4 +1,3 @@
-// CustomerTrackingController.java
 package ltweb.controller;
 
 import ltweb.entity.*;
@@ -22,21 +21,21 @@ public class CustomerTrackingController {
     private final ShipmentService shipmentService;
 
     @GetMapping("/tracking")
-    public String trackingPage(@RequestParam(required = false) String orderCode, Model model, HttpSession session) {
+    public String trackingPage(@RequestParam(required = false) String orderCode,
+            Model model, HttpSession session) {
         if (orderCode != null && !orderCode.isEmpty()) {
             try {
                 Customer customer = (Customer) session.getAttribute("currentCustomer");
                 Order order = orderService.getOrderByCode(orderCode);
-                
+
                 if (!order.getCustomer().getId().equals(customer.getId())) {
                     model.addAttribute("error", "Không tìm thấy đơn hàng");
                     return "customer/tracking";
                 }
 
                 Shipment shipment = shipmentService.getShipmentByOrderId(order.getId());
-                List<Tracking> trackings = shipment != null ? 
-                    trackingService.getTrackingsByShipmentId(shipment.getId()) : 
-                    List.of();
+                List<Tracking> trackings = shipment != null ? trackingService.getTrackingsByShipmentId(shipment.getId())
+                        : List.of();
 
                 model.addAttribute("order", order);
                 model.addAttribute("shipment", shipment);

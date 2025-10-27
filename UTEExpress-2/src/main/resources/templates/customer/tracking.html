@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html xmlns:th="http://www.thymeleaf.org">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lộ trình vận chuyển - UTEExpress</title>
+    <title>Tra cứu đơn hàng - UTEExpress</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -22,7 +23,7 @@
             background: white;
             border-radius: 20px;
             padding: 30px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
             margin-bottom: 30px;
         }
 
@@ -37,12 +38,6 @@
             padding: 15px 60px 15px 25px;
             border: 2px solid #e0e0e0;
             font-size: 16px;
-            transition: all 0.3s;
-        }
-
-        .search-input-group input:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
         }
 
         .search-btn {
@@ -62,7 +57,7 @@
             background: white;
             border-radius: 20px;
             padding: 40px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
             margin-bottom: 30px;
         }
 
@@ -73,10 +68,8 @@
             background: linear-gradient(180deg, #e3f2fd 0%, #ffffff 100%);
             border-radius: 15px;
             overflow: hidden;
-            box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
         }
 
-        /* City markers */
         .city-marker {
             position: absolute;
             transform: translate(-50%, -50%);
@@ -99,19 +92,12 @@
             opacity: 0;
         }
 
-        .pulse-ring:nth-child(2) {
-            animation-delay: 0.5s;
-        }
-
-        .pulse-ring:nth-child(3) {
-            animation-delay: 1s;
-        }
-
         @keyframes pulse-animation {
             0% {
                 transform: scale(0.3);
                 opacity: 1;
             }
+
             100% {
                 transform: scale(1.5);
                 opacity: 0;
@@ -139,14 +125,16 @@
             animation: bounce 1s infinite;
         }
 
-        .marker-icon i {
-            color: white;
-            font-size: 26px;
-        }
-
         @keyframes bounce {
-            0%, 100% { transform: translate(-50%, -50%) scale(1); }
-            50% { transform: translate(-50%, -50%) scale(1.1); }
+
+            0%,
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+            }
+
+            50% {
+                transform: translate(-50%, -50%) scale(1.1);
+            }
         }
 
         .city-label {
@@ -158,15 +146,8 @@
             padding: 8px 20px;
             border-radius: 20px;
             font-weight: 600;
-            font-size: 14px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             white-space: nowrap;
-        }
-
-        /* Animated route line */
-        .route-path {
-            position: absolute;
-            z-index: 10;
         }
 
         .route-line {
@@ -189,43 +170,39 @@
             }
         }
 
-        .route-arrow {
-            fill: #667eea;
-            animation: arrow-pulse 1.5s ease-in-out infinite;
-        }
-
-        .route-arrow.active {
-            fill: #f5576c;
-        }
-
-        @keyframes arrow-pulse {
-            0%, 100% { opacity: 0.6; }
-            50% { opacity: 1; }
-        }
-
-        /* Delivery truck animation */
         .delivery-truck {
             position: absolute;
             z-index: 15;
             font-size: 30px;
             color: #f5576c;
             animation: truck-move 5s ease-in-out infinite;
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
         }
 
         @keyframes truck-move {
-            0%, 100% { transform: translate(0, 0) rotate(0deg); }
-            25% { transform: translate(20px, -10px) rotate(-5deg); }
-            50% { transform: translate(40px, 0) rotate(0deg); }
-            75% { transform: translate(20px, 10px) rotate(5deg); }
+
+            0%,
+            100% {
+                transform: translate(0, 0);
+            }
+
+            25% {
+                transform: translate(20px, -10px);
+            }
+
+            50% {
+                transform: translate(40px, 0);
+            }
+
+            75% {
+                transform: translate(20px, 10px);
+            }
         }
 
-        /* Timeline section */
         .timeline-section {
             background: white;
             border-radius: 20px;
             padding: 40px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
         }
 
         .timeline {
@@ -259,12 +236,10 @@
             background: white;
             border: 4px solid #667eea;
             border-radius: 50%;
-            box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);
         }
 
         .timeline-marker.completed {
             background: #667eea;
-            border-color: #667eea;
         }
 
         .timeline-marker.completed::after {
@@ -286,18 +261,6 @@
             border-left: 4px solid #667eea;
         }
 
-        .timeline-content h6 {
-            color: #667eea;
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
-
-        .timeline-time {
-            color: #6c757d;
-            font-size: 14px;
-        }
-
-        /* Order info card */
         .order-info-card {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -311,11 +274,7 @@
             display: flex;
             justify-content: space-between;
             padding: 15px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
-        }
-
-        .info-row:last-child {
-            border-bottom: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .status-badge {
@@ -323,143 +282,164 @@
             padding: 8px 20px;
             border-radius: 20px;
             font-weight: 600;
-            font-size: 14px;
         }
 
-        .status-badge.pending {
+        .status-badge.cho-giao {
             background: #ffc107;
             color: #000;
         }
 
-        .status-badge.transit {
+        .status-badge.dang-giao {
             background: #17a2b8;
             color: white;
         }
 
-        .status-badge.completed {
+        .status-badge.hoan-thanh {
             background: #28a745;
             color: white;
         }
 
-        .status-badge.cancelled {
+        .status-badge.huy {
             background: #6c757d;
             color: white;
         }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .vietnam-map {
-                height: 500px;
-            }
-
-            .city-label {
-                font-size: 12px;
-                padding: 6px 15px;
-            }
-
-            .marker-icon {
-                width: 50px;
-                height: 50px;
-            }
-        }
     </style>
 </head>
+
 <body>
     <div class="container tracking-container">
-        <!-- Search Section -->
         <div class="search-section">
             <h2 class="text-center mb-4">
                 <i class="fas fa-search"></i> Tra cứu vận đơn
             </h2>
-            <div class="search-input-group">
-                <input type="text" class="form-control" id="orderCodeInput" 
-                       placeholder="Nhập mã vận đơn (VD: ORD1729660123456)">
-                <button class="search-btn" onclick="searchOrder()">
-                    <i class="fas fa-search"></i> Tra cứu
-                </button>
+            <form th:action="@{/customer/tracking}" method="get">
+                <div class="search-input-group">
+                    <input type="text" class="form-control" name="orderCode" th:value="${param.orderCode}"
+                        placeholder="Nhập mã vận đơn" required>
+                    <button type="submit" class="search-btn">
+                        <i class="fas fa-search"></i> Tra cứu
+                    </button>
+                </div>
+            </form>
+
+            <div th:if="${error}" class="alert alert-danger mt-3 text-center">
+                <i class="fas fa-exclamation-circle"></i>
+                <span th:text="${error}"></span>
             </div>
         </div>
 
-        <div id="trackingResult" style="display: none;">
+        <div th:if="${order}" id="trackingResult">
             <div class="row">
-                <!-- Order Info -->
                 <div class="col-lg-4">
                     <div class="order-info-card">
                         <h4 class="mb-4"><i class="fas fa-box"></i> Thông tin đơn hàng</h4>
                         <div class="info-row">
                             <span>Mã vận đơn:</span>
-                            <strong id="orderCode">-</strong>
+                            <strong th:text="${order.orderCode}"></strong>
                         </div>
                         <div class="info-row">
                             <span>Trạng thái:</span>
-                            <span class="status-badge transit" id="orderStatus">Đang giao</span>
+                            <span class="status-badge" th:classappend="${order.status.name() == 'CHO_GIAO' ? 'cho-giao' :
+                                                   (order.status.name() == 'DANG_GIAO' ? 'dang-giao' :
+                                                   (order.status.name() == 'HOAN_THANH' ? 'hoan-thanh' : 'huy'))}"
+                                th:text="${order.status.name() == 'CHO_GIAO' ? 'Chờ giao' :
+                                           (order.status.name() == 'DANG_GIAO' ? 'Đang giao' :
+                                           (order.status.name() == 'HOAN_THANH' ? 'Hoàn thành' : 'Đã hủy'))}"></span>
                         </div>
                         <div class="info-row">
                             <span>Loại dịch vụ:</span>
-                            <strong id="serviceType">-</strong>
+                            <strong
+                                th:text="${order.serviceType.name() == 'EXPRESS' ? 'Nhanh' :
+                                             (order.serviceType.name() == 'STANDARD' ? 'Chuẩn' : 'Tiết kiệm')}"></strong>
                         </div>
                         <div class="info-row">
                             <span>Người gửi:</span>
-                            <strong id="senderName">-</strong>
+                            <strong th:text="${order.senderName}"></strong>
                         </div>
                         <div class="info-row">
                             <span>Người nhận:</span>
-                            <strong id="recipientName">-</strong>
+                            <strong th:text="${order.recipientName}"></strong>
                         </div>
                         <div class="info-row">
                             <span>Từ:</span>
-                            <strong id="fromWarehouse">-</strong>
+                            <strong th:text="${order.warehouse.name}"></strong>
                         </div>
                         <div class="info-row">
                             <span>Đến:</span>
-                            <strong id="toWarehouse">-</strong>
+                            <strong th:text="${order.destinationWarehouse.name}"></strong>
                         </div>
                     </div>
 
-                    <!-- Timeline -->
                     <div class="timeline-section">
                         <h5 class="mb-4"><i class="fas fa-route"></i> Lịch sử vận chuyển</h5>
-                        <div class="timeline" id="trackingTimeline">
-                            <!-- Timeline items will be inserted here -->
+                        <div class="timeline">
+                            <div th:if="${trackings.empty}" class="text-muted">
+                                Chưa có thông tin lộ trình
+                            </div>
+                            <div th:each="tracking : ${trackings}" class="timeline-item">
+                                <div class="timeline-marker completed"></div>
+                                <div class="timeline-content">
+                                    <h6 th:text="${tracking.description}"></h6>
+                                    <div class="text-muted">
+                                        <i class="far fa-clock"></i>
+                                        <span
+                                            th:text="${#temporals.format(tracking.createdAt, 'dd/MM/yyyy HH:mm')}"></span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Map -->
                 <div class="col-lg-8">
                     <div class="map-section">
                         <h4 class="mb-4"><i class="fas fa-map-marked-alt"></i> Lộ trình vận chuyển</h4>
-                        <div class="vietnam-map" id="vietnamMap">
-                            <!-- SVG Routes -->
-                            <svg style="position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 10;">
-                                <!-- HCM to DN -->
-                                <path id="route-hcm-dn" class="route-line" 
-                                      d="M 20% 80% Q 30% 60% 50% 50%" />
-                                <polygon class="route-arrow" points="500,350 485,345 485,355" />
-                                
-                                <!-- DN to HN -->
-                                <path id="route-dn-hn" class="route-line"
-                                      d="M 50% 50% Q 55% 30% 60% 15%" />
-                                <polygon class="route-arrow" points="600,150 585,145 585,155" />
-                                
-                                <!-- HN to DN -->
-                                <path id="route-hn-dn" class="route-line"
-                                      d="M 60% 15% Q 55% 35% 50% 50%" />
-                                <polygon class="route-arrow" points="500,350 485,345 485,355" />
-                                
-                                <!-- DN to HCM -->
-                                <path id="route-dn-hcm" class="route-line"
-                                      d="M 50% 50% Q 35% 65% 20% 80%" />
-                                <polygon class="route-arrow" points="200,560 185,555 185,565" />
+                        <div class="vietnam-map">
+                            <svg
+                                style="position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 10;">
+                                <path
+                                    th:if="${order.warehouse.code == 'WH-HCM' and order.destinationWarehouse.code == 'WH-HN'}"
+                                    class="route-line"
+                                    th:classappend="${order.status.name() == 'DANG_GIAO' ? 'active' : ''}"
+                                    d="M 20% 80% Q 30% 60% 50% 50% Q 55% 30% 60% 15%" />
+
+                                <path
+                                    th:if="${order.warehouse.code == 'WH-HN' and order.destinationWarehouse.code == 'WH-HCM'}"
+                                    class="route-line"
+                                    th:classappend="${order.status.name() == 'DANG_GIAO' ? 'active' : ''}"
+                                    d="M 60% 15% Q 55% 35% 50% 50% Q 35% 65% 20% 80%" />
+
+                                <path
+                                    th:if="${order.warehouse.code == 'WH-HCM' and order.destinationWarehouse.code == 'WH-DN'}"
+                                    class="route-line"
+                                    th:classappend="${order.status.name() == 'DANG_GIAO' ? 'active' : ''}"
+                                    d="M 20% 80% Q 30% 60% 50% 50%" />
+
+                                <path
+                                    th:if="${order.warehouse.code == 'WH-DN' and order.destinationWarehouse.code == 'WH-HCM'}"
+                                    class="route-line"
+                                    th:classappend="${order.status.name() == 'DANG_GIAO' ? 'active' : ''}"
+                                    d="M 50% 50% Q 35% 65% 20% 80%" />
+
+                                <path
+                                    th:if="${order.warehouse.code == 'WH-HN' and order.destinationWarehouse.code == 'WH-DN'}"
+                                    class="route-line"
+                                    th:classappend="${order.status.name() == 'DANG_GIAO' ? 'active' : ''}"
+                                    d="M 60% 15% Q 55% 30% 50% 50%" />
+
+                                <path
+                                    th:if="${order.warehouse.code == 'WH-DN' and order.destinationWarehouse.code == 'WH-HN'}"
+                                    class="route-line"
+                                    th:classappend="${order.status.name() == 'DANG_GIAO' ? 'active' : ''}"
+                                    d="M 50% 50% Q 55% 35% 60% 15%" />
                             </svg>
 
-                            <!-- City Markers -->
-                            <div class="city-marker" id="hn-marker" style="left: 60%; top: 15%;">
+                            <div class="city-marker" style="left: 60%; top: 15%;">
                                 <div class="marker-pulse">
                                     <div class="pulse-ring"></div>
                                     <div class="pulse-ring"></div>
-                                    <div class="pulse-ring"></div>
-                                    <div class="marker-icon">
+                                    <div class="marker-icon"
+                                        th:classappend="${(order.warehouse.code == 'WH-HN' or order.destinationWarehouse.code == 'WH-HN') ? 'active' : ''}">
                                         <i class="fas fa-warehouse"></i>
                                     </div>
                                 </div>
@@ -468,12 +448,12 @@
                                 </div>
                             </div>
 
-                            <div class="city-marker" id="dn-marker" style="left: 50%; top: 50%;">
+                            <div class="city-marker" style="left: 50%; top: 50%;">
                                 <div class="marker-pulse">
                                     <div class="pulse-ring"></div>
                                     <div class="pulse-ring"></div>
-                                    <div class="pulse-ring"></div>
-                                    <div class="marker-icon">
+                                    <div class="marker-icon"
+                                        th:classappend="${(order.warehouse.code == 'WH-DN' or order.destinationWarehouse.code == 'WH-DN') ? 'active' : ''}">
                                         <i class="fas fa-warehouse"></i>
                                     </div>
                                 </div>
@@ -482,12 +462,12 @@
                                 </div>
                             </div>
 
-                            <div class="city-marker" id="hcm-marker" style="left: 20%; top: 80%;">
+                            <div class="city-marker" style="left: 20%; top: 80%;">
                                 <div class="marker-pulse">
                                     <div class="pulse-ring"></div>
                                     <div class="pulse-ring"></div>
-                                    <div class="pulse-ring"></div>
-                                    <div class="marker-icon">
+                                    <div class="marker-icon"
+                                        th:classappend="${(order.warehouse.code == 'WH-HCM' or order.destinationWarehouse.code == 'WH-HCM') ? 'active' : ''}">
                                         <i class="fas fa-warehouse"></i>
                                     </div>
                                 </div>
@@ -496,8 +476,8 @@
                                 </div>
                             </div>
 
-                            <!-- Delivery Truck (shown when in transit) -->
-                            <div class="delivery-truck" id="deliveryTruck" style="display: none; left: 35%; top: 65%;">
+                            <div th:if="${order.status.name() == 'DANG_GIAO'}" class="delivery-truck"
+                                style="left: 35%; top: 65%;">
                                 <i class="fas fa-truck"></i>
                             </div>
                         </div>
@@ -508,174 +488,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Demo data
-        const demoOrder = {
-            orderCode: 'ORD1729660123456',
-            status: 'DANG_GIAO',
-            serviceType: 'Express',
-            senderName: 'Nguyễn Văn A',
-            recipientName: 'Trần Thị B',
-            fromWarehouse: 'WH-HCM',
-            toWarehouse: 'WH-HN',
-            trackings: [
-                {
-                    description: 'Đơn hàng đã được tạo',
-                    createdAt: '2024-01-15 08:00:00',
-                    completed: true
-                },
-                {
-                    description: 'Hàng đã được lấy từ kho TP.HCM',
-                    createdAt: '2024-01-15 10:30:00',
-                    completed: true
-                },
-                {
-                    description: 'Đang vận chuyển đến Đà Nẵng',
-                    createdAt: '2024-01-15 14:00:00',
-                    completed: true
-                },
-                {
-                    description: 'Hàng đã đến kho Đà Nẵng',
-                    createdAt: '2024-01-16 08:00:00',
-                    completed: false
-                }
-            ]
-        };
-
-        function searchOrder() {
-            const orderCode = document.getElementById('orderCodeInput').value;
-            if (!orderCode) {
-                alert('Vui lòng nhập mã vận đơn');
-                return;
-            }
-
-            // Show demo result
-            displayOrder(demoOrder);
-        }
-
-        function displayOrder(order) {
-            document.getElementById('trackingResult').style.display = 'block';
-            
-            // Update order info
-            document.getElementById('orderCode').textContent = order.orderCode;
-            document.getElementById('serviceType').textContent = order.serviceType;
-            document.getElementById('senderName').textContent = order.senderName;
-            document.getElementById('recipientName').textContent = order.recipientName;
-            document.getElementById('fromWarehouse').textContent = getWarehouseName(order.fromWarehouse);
-            document.getElementById('toWarehouse').textContent = getWarehouseName(order.toWarehouse);
-            
-            // Update status badge
-            const statusBadge = document.getElementById('orderStatus');
-            statusBadge.textContent = getStatusText(order.status);
-            statusBadge.className = 'status-badge ' + getStatusClass(order.status);
-
-            // Update timeline
-            updateTimeline(order.trackings);
-
-            // Update map
-            updateMap(order);
-
-            // Scroll to result
-            document.getElementById('trackingResult').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        function updateTimeline(trackings) {
-            const timeline = document.getElementById('trackingTimeline');
-            timeline.innerHTML = '';
-
-            trackings.forEach(tracking => {
-                const item = document.createElement('div');
-                item.className = 'timeline-item';
-                item.innerHTML = `
-                    <div class="timeline-marker ${tracking.completed ? 'completed' : ''}"></div>
-                    <div class="timeline-content">
-                        <h6>${tracking.description}</h6>
-                        <div class="timeline-time">
-                            <i class="far fa-clock"></i> ${tracking.createdAt}
-                        </div>
-                    </div>
-                `;
-                timeline.appendChild(item);
-            });
-        }
-
-        function updateMap(order) {
-            // Reset all markers
-            document.querySelectorAll('.marker-icon').forEach(m => m.classList.remove('active'));
-            document.querySelectorAll('.route-line').forEach(l => l.classList.remove('active'));
-            document.getElementById('deliveryTruck').style.display = 'none';
-
-            if (order.status === 'HUY') return;
-
-            // Activate route
-            const from = order.fromWarehouse;
-            const to = order.toWarehouse;
-
-            if (from === 'WH-HCM' && to === 'WH-HN') {
-                document.getElementById('hcm-marker').querySelector('.marker-icon').classList.add('active');
-                document.getElementById('route-hcm-dn').classList.add('active');
-                
-                if (order.status === 'DANG_GIAO') {
-                    document.getElementById('deliveryTruck').style.display = 'block';
-                    document.getElementById('dn-marker').querySelector('.marker-icon').classList.add('active');
-                }
-            } else if (from === 'WH-HCM' && to === 'WH-DN') {
-                document.getElementById('hcm-marker').querySelector('.marker-icon').classList.add('active');
-                document.getElementById('route-hcm-dn').classList.add('active');
-                if (order.status === 'DANG_GIAO') {
-                    document.getElementById('deliveryTruck').style.display = 'block';
-                }
-            }
-
-            if (order.status === 'HOAN_THANH') {
-                document.getElementById(getMarkerIdFromWarehouse(to)).querySelector('.marker-icon').classList.add('active');
-            }
-        }
-
-        function getMarkerIdFromWarehouse(code) {
-            const map = {
-                'WH-HCM': 'hcm-marker',
-                'WH-DN': 'dn-marker',
-                'WH-HN': 'hn-marker'
-            };
-            return map[code] || 'hcm-marker';
-        }
-
-        function getWarehouseName(code) {
-            const names = {
-                'WH-HCM': 'Kho TP.HCM',
-                'WH-DN': 'Kho Đà Nẵng',
-                'WH-HN': 'Kho Hà Nội'
-            };
-            return names[code] || code;
-        }
-
-        function getStatusText(status) {
-            const texts = {
-                'CHO_GIAO': 'Chờ giao',
-                'DANG_GIAO': 'Đang giao',
-                'HOAN_THANH': 'Hoàn thành',
-                'HUY': 'Đã hủy'
-            };
-            return texts[status] || status;
-        }
-
-        function getStatusClass(status) {
-            const classes = {
-                'CHO_GIAO': 'pending',
-                'DANG_GIAO': 'transit',
-                'HOAN_THANH': 'completed',
-                'HUY': 'cancelled'
-            };
-            return classes[status] || 'pending';
-        }
-
-        // Auto-load demo on enter key
-        document.getElementById('orderCodeInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                searchOrder();
-            }
-        });
-    </script>
 </body>
+
 </html>
