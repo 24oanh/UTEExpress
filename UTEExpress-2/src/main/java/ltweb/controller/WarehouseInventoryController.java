@@ -1,3 +1,4 @@
+// WarehouseInventoryController.java
 package ltweb.controller;
 
 import ltweb.dto.*;
@@ -24,14 +25,11 @@ public class WarehouseInventoryController {
     private final WarehouseService warehouseService;
 
     // ==================== NHẬP KHO ====================
-
     @GetMapping("/inbound/receive-order/{orderId}")
     public String receiveOrderForm(@PathVariable Long orderId, Model model, HttpSession session) {
         Warehouse warehouse = (Warehouse) session.getAttribute("currentWarehouse");
-
         model.addAttribute("orderId", orderId);
         model.addAttribute("warehouse", warehouse);
-
         return "warehouse/receive-order-form";
     }
 
@@ -48,7 +46,6 @@ public class WarehouseInventoryController {
 
             redirectAttributes.addFlashAttribute("success",
                     "✓ Nhập kho thành công! Mã phiếu: " + receipt.getReceiptCode());
-
             return "redirect:/warehouse/inbound";
 
         } catch (Exception e) {
@@ -57,58 +54,21 @@ public class WarehouseInventoryController {
         }
     }
 
-    // ==================== XUẤT KHO ====================
-
-    @GetMapping("/outbound/issue-order/{orderId}")
-    public String issueOrderForm(@PathVariable Long orderId, Model model, HttpSession session) {
-        Warehouse warehouse = (Warehouse) session.getAttribute("currentWarehouse");
-
-        model.addAttribute("orderId", orderId);
-        model.addAttribute("warehouse", warehouse);
-
-        return "warehouse/issue-order-form";
-    }
-
-    @PostMapping("/outbound/issue-order/{orderId}")
-    public String issueOrder(@PathVariable Long orderId,
-            @RequestParam Long shipperId,
-            HttpSession session,
-            RedirectAttributes redirectAttributes) {
-        try {
-            User user = (User) session.getAttribute("currentUser");
-
-            OutboundReceipt receipt = warehouseService.issueOrderToShipper(
-                    orderId, shipperId, user);
-
-            redirectAttributes.addFlashAttribute("success",
-                    "✓ Xuất kho thành công! Mã phiếu: " + receipt.getReceiptCode());
-
-            return "redirect:/warehouse/outbound";
-
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Lỗi xuất kho: " + e.getMessage());
-            return "redirect:/warehouse/orders/" + orderId;
-        }
-    }
-
     // ==================== TỒN KHO ====================
-
     @GetMapping("/inventory")
     public String inventoryPage(Model model, HttpSession session) {
         Warehouse warehouse = (Warehouse) session.getAttribute("currentWarehouse");
-
         List<Inventory> inventories = warehouseService.getInventoryByWarehouseId(warehouse.getId());
 
         model.addAttribute("warehouse", warehouse);
         model.addAttribute("inventories", inventories);
-
         return "warehouse/inventory";
     }
 
     @GetMapping("/inventory/report")
     public String inventoryReportPage(Model model, HttpSession session,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm") LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm") LocalDateTime endDate) {
         Warehouse warehouse = (Warehouse) session.getAttribute("currentWarehouse");
 
         if (startDate == null) {
@@ -124,37 +84,10 @@ public class WarehouseInventoryController {
         model.addAttribute("report", report);
         model.addAttribute("startDate", startDate);
         model.addAttribute("endDate", endDate);
-
         return "warehouse/inventory-report";
     }
 
-    // ==================== BÁO CÁO NHẬP XUẤT ====================
-
-    @GetMapping("/reports/inbound-outbound")
-    public String inboundOutboundReportPage(Model model, HttpSession session,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
-        Warehouse warehouse = (Warehouse) session.getAttribute("currentWarehouse");
-
-        if (startDate == null) {
-            startDate = LocalDateTime.now().minusDays(30);
-        }
-        if (endDate == null) {
-            endDate = LocalDateTime.now();
-        }
-
-        InboundOutboundReportDTO report = warehouseService.getInboundOutboundReport(
-                warehouse.getId(), startDate, endDate);
-
-        model.addAttribute("report", report);
-        model.addAttribute("startDate", startDate);
-        model.addAttribute("endDate", endDate);
-
-        return "warehouse/inbound-outbound-report";
-    }
-
     // ==================== API ====================
-
     @GetMapping("/api/inventory/{warehouseId}")
     @ResponseBody
     public ResponseEntity<List<Inventory>> getInventory(@PathVariable Long warehouseId) {
@@ -166,9 +99,8 @@ public class WarehouseInventoryController {
     @ResponseBody
     public ResponseEntity<InventoryReportDTO> getInventoryReportAPI(
             @PathVariable Long warehouseId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {
-
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm") LocalDateTime startDate,
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm") LocalDateTime endDate) {
         InventoryReportDTO report = warehouseService.getInventoryReport(warehouseId, startDate, endDate);
         return ResponseEntity.ok(report);
     }

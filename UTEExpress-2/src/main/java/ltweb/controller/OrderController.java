@@ -209,4 +209,66 @@ public class OrderController {
 
         return "redirect:/warehouse/orders/" + id;
     }
+
+    @GetMapping("/{id}/issue-outbound")
+    public String issueOutboundForm(@PathVariable Long id, Model model, HttpSession session,
+            RedirectAttributes redirectAttributes) {
+        Order order = orderService.getOrderById(id);
+        Warehouse warehouse = (Warehouse) session.getAttribute("currentWarehouse");
+
+        if (!order.getWarehouse().getId().equals(warehouse.getId())) {
+            redirectAttributes.addFlashAttribute("error", "Không có quyền xuất kho cho đơn này");
+            return "redirect:/warehouse/orders/" + id;
+        }
+
+        List<InboundReceipt> inboundReceipts = warehouseService.getInboundReceiptsByOrderId(id);
+        if (inboundReceipts.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Đơn hàng chưa được nhập kho");
+            return "redirect:/warehouse/orders/" + id;
+        }
+
+        List<OutboundReceipt> outboundReceipts = warehouseService.getOutboundReceiptsByOrderId(id);
+        if (!outboundReceipts.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "Đơn hàng đã được xuất kho");
+            return "redirect:/warehouse/orders/" + id;
+        }
+
+        if (order.getShipper() == null) {
+            redirectAttributes.addFlashAttribute("error", "Đơn hàng chưa có shipper được phân công");
+            return "redirect:/warehouse/orders/" + id;
+        }
+
+        model.addAttribute("order", order);
+        model.addAttribute("warehouse", warehouse);
+        return "warehouse/issue-outbound-confirm";
+    }
+
+    @PostMapping("/{id}/issue-outbound")
+    public String issueOutbound(@PathVariable Long id, HttpSession session, RedirectAttributes redirectAttributes) {
+        try {
+            Order order = orderService.getOrderById(id);
+            Warehouse warehouse = (Warehouse) session.getAttribute("currentWarehouse");
+            User user = (User) session.getAttribute("currentUser");
+
+            if (!order.getWarehouse().getId().equals(warehouse.getId())) {
+                redirectAttributes.addFlashAttribute("error", "Không có quyền xuất kho cho đơn này");
+                return "redirect:/warehouse/orders/" + id;
+            }
+
+            if (order.getShipper() == null) {
+                redirectAttributes.addFlashAttribute("error", "Đơn hàng chưa có shipper");
+                return "redirect:/warehouse/orders/" + id;
+            }
+
+            OutboundReceipt receipt = warehouseService.issueOrderToShipper(id, order.getShipper().getId(), user);
+
+            redirectAttributes.addFlashAttribute("success",
+                    "✓ Xuất kho thành công! Mã phiếu: " + receipt.getReceiptCode());
+            return "redirect:/warehouse/outbound";
+
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi xuất kho: " + e.getMessage());
+            return "redirect:/warehouse/orders/" + id;
+        }
+    }
 }

@@ -1,3 +1,4 @@
+<!-- inventory-report.html -->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 
@@ -50,14 +51,6 @@
             font-weight: 700;
             color: #2c3e50;
         }
-
-        .chart-container {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-            margin-bottom: 30px;
-        }
     </style>
 </head>
 
@@ -72,12 +65,12 @@
                 <div class="form-group">
                     <label>Từ ngày</label>
                     <input type="datetime-local" name="startDate"
-                        th:value="${#temporals.format(startDate, 'yyyy-MM-dd\'T\'HH:mm')}" class="form-control">
+                        th:value="${#temporals.format(startDate, 'yyyy-MM-dd''T''HH:mm')}" class="form-control">
                 </div>
                 <div class="form-group">
                     <label>Đến ngày</label>
                     <input type="datetime-local" name="endDate"
-                        th:value="${#temporals.format(endDate, 'yyyy-MM-dd\'T\'HH:mm')}" class="form-control">
+                        th:value="${#temporals.format(endDate, 'yyyy-MM-dd''T''HH:mm')}" class="form-control">
                 </div>
                 <button type="submit" class="btn-primary">
                     <i class="fas fa-search"></i> Lọc
@@ -112,7 +105,7 @@
             </div>
         </div>
 
-        <div class="chart-container">
+        <div style="background: white; padding: 25px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
             <h3 style="margin-bottom: 20px;">Chi tiết tồn kho</h3>
             <table>
                 <thead>

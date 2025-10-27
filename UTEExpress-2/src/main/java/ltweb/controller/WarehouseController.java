@@ -58,11 +58,19 @@ public class WarehouseController {
         return "warehouse/dashboard";
     }
 
+    // WarehouseController.java - Sửa lại info update
     @GetMapping("/info")
     public String warehouseInfo(Model model, HttpSession session) {
         Warehouse warehouse = (Warehouse) session.getAttribute("currentWarehouse");
         model.addAttribute("warehouse", warehouse);
         return "warehouse/info";
+    }
+
+    @GetMapping("/info/edit")
+    public String editWarehouseForm(Model model, HttpSession session) {
+        Warehouse warehouse = (Warehouse) session.getAttribute("currentWarehouse");
+        model.addAttribute("warehouse", warehouse);
+        return "warehouse/info-edit";
     }
 
     @PostMapping("/info/update")
@@ -72,11 +80,14 @@ public class WarehouseController {
         try {
             Warehouse warehouse = (Warehouse) session.getAttribute("currentWarehouse");
             warehouseService.updateWarehouse(warehouse.getId(), warehouseDetails);
-            redirectAttributes.addFlashAttribute("success", "Warehouse information updated successfully");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Failed to update warehouse information: " + e.getMessage());
-        }
 
+            Warehouse updated = warehouseService.getWarehouseById(warehouse.getId());
+            session.setAttribute("currentWarehouse", updated);
+
+            redirectAttributes.addFlashAttribute("success", "Cập nhật thông tin kho thành công");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi cập nhật: " + e.getMessage());
+        }
         return "redirect:/warehouse/info";
     }
 
