@@ -25,14 +25,15 @@ public class CustomerAuthController {
 
 	@GetMapping("/register")
 	public String registerPage(Model model) {
-	    model.addAttribute("registration", new CustomerRegistrationDTO());
-	    model.addAttribute("forgotPasswordDTO", new ForgotPasswordDTO());
-	    return "register";
+		model.addAttribute("registration", new CustomerRegistrationDTO());
+		model.addAttribute("forgotPasswordDTO", new ForgotPasswordDTO());
+		return "register";
 	}
 
 	@PostMapping("/register")
 	public String register(@Valid @ModelAttribute("registration") CustomerRegistrationDTO dto, BindingResult result,
 			Model model, RedirectAttributes redirectAttributes) {
+
 		if (result.hasErrors()) {
 			model.addAttribute("registration", dto);
 			return "customer/register";
@@ -41,7 +42,7 @@ public class CustomerAuthController {
 		try {
 			customerService.registerCustomer(dto);
 			redirectAttributes.addFlashAttribute("success",
-					"Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.");
+					"Đăng ký thành công! Bạn có thể đăng nhập ngay.");
 			return "redirect:/login";
 		} catch (Exception e) {
 			model.addAttribute("error", e.getMessage());
@@ -49,7 +50,6 @@ public class CustomerAuthController {
 			return "customer/register";
 		}
 	}
-	
 
 	@GetMapping("/verify")
 	public String verifyEmail(@RequestParam String token, RedirectAttributes redirectAttributes) {
