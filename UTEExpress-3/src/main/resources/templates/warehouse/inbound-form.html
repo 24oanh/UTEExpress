@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Tạo phiếu nhập</title>
+    <link rel="stylesheet" th:href="@{/css/warehouse.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/warehouse-header :: header}"></div>
+    <div class="container">
+        <h1>Tạo phiếu nhập kho</h1>
+        <form th:action="@{/warehouse/inbound/create}" th:object="${receipt}" method="post" class="form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Mã phiếu *</label>
+                    <input type="text" th:field="*{receiptCode}" required>
+                </div>
+                <div class="form-group">
+                    <label>Đơn hàng</label>
+                    <select th:field="*{order.id}">
+                        <option value="">-- Chọn đơn --</option>
+                        <option th:each="order : ${orders}" th:value="${order.id}" th:text="${order.orderCode}"></option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Ghi chú</label>
+                <textarea th:field="*{notes}" rows="2"></textarea>
+            </div>
+            
+            <div id="package-list">
+                <h3>Danh sách kiện hàng</h3>
+                <div class="package-item">
+                    <select name="packageIds" required>
+                        <option value="">-- Chọn kiện --</option>
+                    </select>
+                    <input type="number" name="quantities" placeholder="Số lượng" min="1" required>
+                    <select name="locationIds">
+                        <option value="">-- Vị trí (tùy chọn) --</option>
+                        <option th:each="loc : ${emptyLocations}" th:value="${loc.id}" th:text="${loc.locationCode}"></option>
+                    </select>
+                </div>
+            </div>
+            <button type="button" onclick="addPackage()" class="btn-secondary mb-3">+ Thêm kiện</button>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Tạo phiếu</button>
+                <a th:href="@{/warehouse/inbound}" class="btn-secondary">Hủy</a>
+            </div>
+        </form>
+    </div>
+    <script>
+        function addPackage() {
+            const list = document.getElementById('package-list');
+            const item = document.querySelector('.package-item').cloneNode(true);
+            list.appendChild(item);
+        }
+    </script>
+</body>
+</html>

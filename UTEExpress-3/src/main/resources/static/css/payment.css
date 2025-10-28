@@ -1,0 +1,81 @@
+.payment-method {
+    position: relative;
+}
+
+.qr-modal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.7);
+}
+
+.qr-modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 30px;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 500px;
+    text-align: center;
+    position: relative;
+}
+
+.qr-close {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #aaa;
+}
+
+.qr-close:hover {
+    color: #000;
+}
+
+.qr-image {
+    width: 100%;
+    max-width: 350px;
+    margin: 20px auto;
+}
+
+.qr-info {
+    margin-top: 20px;
+    font-size: 16px;
+}
+
+.qr-info p {
+    margin: 10px 0;
+}
+
+.verify-payment-btn {
+    margin-top: 20px;
+    padding: 12px 30px;
+    background: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.verify-payment-btn:hover {
+    background: #229954;
+}
+
+.payment-success {
+    display: none;
+    text-align: center;
+    padding: 30px;
+}
+
+.payment-success i {
+    font-size: 60px;
+    color: #27ae60;
+    margin-bottom: 20px;
+}

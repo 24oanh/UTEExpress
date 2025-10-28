@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Danh sách Shipper</title>
+<link rel="stylesheet" th:href="@{/css/warehouse.css}">
+</head>
+<body>
+	<div th:replace="~{fragments/warehouse-header :: header}"></div>
+	<div class="container">
+		<h1>Danh sách Shipper</h1>
+		<table>
+			<thead>
+				<tr>
+					<th>Mã</th>
+					<th>Tên</th>
+					<th>SĐT</th>
+					<th>Email</th>
+					<th>Phương tiện</th>
+					<th>Biển số</th>
+					<th>Tổng giao</th>
+					<th>Thành công</th>
+					<th>Thất bại</th>
+					<th>Trạng thái</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="shipper : ${shippers}">
+					<td th:text="${shipper.code}"></td>
+					<td th:text="${shipper.name}"></td>
+					<td th:text="${shipper.phone}"></td>
+					<td th:text="${shipper.email}"></td>
+					<td th:text="${shipper.vehicleType}"></td>
+					<td th:text="${shipper.vehicleNumber}"></td>
+					<td th:text="${shipper.totalDeliveries}"></td>
+					<td th:text="${shipper.successfulDeliveries}"></td>
+					<td th:text="${shipper.failedDeliveries}"></td>
+					<td><span
+						th:class="${shipper.isActive ? 'badge badge-success' : 'badge badge-danger'}"
+						th:text="${shipper.isActive ? 'Hoạt động' : 'Không hoạt động'}"></span></td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</body>
+</html>

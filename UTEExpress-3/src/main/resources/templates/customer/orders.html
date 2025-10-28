@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Đơn hàng của tôi - UTEExpress</title>
+<link
+	href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+	rel="stylesheet">
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+	<div th:replace="~{customer/layout :: header}"></div>
+
+	<div class="container mt-4">
+		<h2>
+			<i class="fas fa-box"></i> Đơn hàng của tôi
+		</h2>
+
+		<div th:if="${orders.empty}" class="card mt-4">
+			<div class="card-body text-center py-5">
+				<i class="fas fa-inbox display-1 text-muted"></i>
+				<p class="mt-3 text-muted">Bạn chưa có đơn hàng nào</p>
+				<a th:href="@{/customer/orders/create}" class="btn btn-primary">
+					<i class="fas fa-plus-circle"></i> Tạo đơn hàng mới
+				</a>
+			</div>
+		</div>
+
+		<div th:unless="${orders.empty}" class="row mt-4">
+			<div class="col-md-12" th:each="order : ${orders}">
+				<div class="card mb-3">
+					<div class="card-body">
+						<div class="d-flex justify-content-between">
+							<h5>
+								<i class="fas fa-shipping-fast"></i> <span
+									th:text="${order.orderCode}"></span>
+							</h5>
+							<span class="badge"
+								th:classappend="${order.status.name() == 'CHO_GIAO' ? 'bg-warning' : 
+                                                  (order.status.name() == 'DANG_GIAO' ? 'bg-info' : 
+                                                  (order.status.name() == 'HOAN_THANH' ? 'bg-success' : 'bg-danger'))}"
+								th:text="${order.status.name() == 'CHO_GIAO' ? 'Chờ giao' : 
+                                           (order.status.name() == 'DANG_GIAO' ? 'Đang giao' : 
+                                           (order.status.name() == 'HOAN_THANH' ? 'Hoàn thành' : 'Thất bại'))}"></span>
+							<span class="badge ms-2" th:if="${order.paymentStatus != null}"
+								th:classappend="${order.paymentStatus.name() == 'PAID' ? 'bg-success' : 'bg-warning'}"
+								th:text="${order.paymentStatus.name() == 'PAID' ? 'Đã thanh toán' : 'Chưa thanh toán'}"></span>
+						</div>
+						<p class="mb-1">
+							<strong>Người nhận:</strong> <span
+								th:text="${order.recipientName}"></span>
+						</p>
+						<p class="mb-1">
+							<strong>Địa chỉ:</strong> <span
+								th:text="${order.recipientAddress}"></span>
+						</p>
+						<p class="mb-1">
+							<strong>Phí:</strong> <span
+								th:text="${#numbers.formatDecimal(order.shipmentFee, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+						</p>
+						<a th:href="@{/customer/orders/{id}(id=${order.id})}"
+							class="btn btn-sm btn-primary"> <i class="fas fa-eye"></i>
+							Chi tiết
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script
+		src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

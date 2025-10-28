@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Chi tiết giao hàng</title>
+<link rel="stylesheet" th:href="@{/css/shipper.css}">
+<style>
+.upload-preview {
+    margin-top: 10px;
+    max-width: 300px;
+}
+.upload-preview img {
+    width: 100%;
+    border-radius: 8px;
+    border: 2px solid #ddd;
+}
+.camera-button {
+    display: inline-block;
+    padding: 10px 20px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-bottom: 10px;
+}
+.camera-button:hover {
+    background: #45a049;
+}
+</style>
+</head>
+<body>
+<div th:replace="~{fragments/shipper-header :: header}"></div>
+<div class="container">
+<div class="page-header">
+<h1>Chi tiết giao hàng</h1>
+<a th:href="@{/shipper/shipments}" class="btn-secondary">Quay lại</a>
+</div>
+<div th:if="${success}" class="alert success" th:text="${success}"></div>
+<div th:if="${error}" class="alert error" th:text="${error}"></div>
+
+<div class="shipment-status-card">
+<h2>
+Mã giao hàng: <span th:text="${shipment.shipmentCode}"></span>
+</h2>
+<p class="status-large">
+<span th:class="'badge badge-' + ${shipment.status} + ' badge-lg'"
+th:text="${shipment.status}"></span>
+</p>
+</div>
+
+<div class="detail-grid">
+<div class="detail-card">
+<h3>Thông tin đơn hàng</h3>
+<p>
+<strong>Mã đơn:</strong> <span
+th:text="${shipment.order.orderCode}"></span>
+</p>
+<p>
+<strong>Người gửi:</strong> <span
+th:text="${shipment.order.senderName}"></span>
+</p>
+<p>
+<strong>Người nhận:</strong> <span
+th:text="${shipment.order.recipientName}"></span>
+</p>
+<p>
+<strong>SĐT nhận:</strong> 
+th:href="'tel:' + ${shipment.order.recipientPhone}"
+th:text="${shipment.order.recipientPhone}"></a>
+</p>
+<p>
+<strong>Địa chỉ:</strong> <span
+th:text="${shipment.order.recipientAddress}"></span>
+</p>
+</div>
+
+<div class="detail-card">
+<h3>Thông tin giao hàng</h3>
+<p th:if="${shipment.pickupTime}">
+<strong>Lấy hàng:</strong> <span
+th:text="${#temporals.format(shipment.pickupTime, 'dd/MM/yyyy HH:mm')}"></span>
+</p>
+<p th:if="${shipment.deliveryTime}">
+<strong>Giao hàng:</strong> <span
+th:text="${#temporals.format(shipment.deliveryTime, 'dd/MM/yyyy HH:mm')}"></span>
+</p>
+<p th:if="${shipment.notes}">
+<strong>Ghi chú:</strong> <span th:text="${shipment.notes}"></span>
+</p>
+<p th:if="${shipment.proofImageUrl}">
+<strong>Ảnh chứng từ:</strong><br> <img
+th:src="${shipment.proofImageUrl}" alt="Proof"
+style="max-width: 300px; margin-top: 10px; border-radius: 8px;">
+</p>
+</div>
+</div>
+
+<div class="action-section"
+th:if="${shipment.status == T(ltweb.entity.ShipmentStatus).PENDING}">
+<h3>Nhận hàng và bắt đầu vận chuyển</h3>
+
+<form
+th:action="@{/shipper/shipments/{id}/receive(id=${shipment.id})}"
+method="post" style="display: inline-block; margin-right: 10px;">
+<button type="submit" class="btn-primary">Xác nhận nhận hàng</button>
+</form>
+
+<form th:action="@{/shipper/shipments/{id}/start(id=${shipment.id})}"
+method="post" style="display: inline-block;">
+<button type="submit" class="btn-success btn-lg">Bắt đầu vận chuyển</button>
+</form>
+</div>
+
+<div class="action-section"
+th:if="${shipment.status == T(ltweb.entity.ShipmentStatus).IN_TRANSIT}">
+<h3>Hoàn thành giao hàng</h3>
+<form
+th:action="@{/shipper/shipments/{id}/complete(id=${shipment.id})}"
+method="post" enctype="multipart/form-data" class="action-form" id="completeForm">
+<div class="form-group">
+<label>Ảnh chứng từ giao hàng *</label>
+<button type="button" class="camera-button" onclick="document.getElementById('proofImageInput').click()">
+📷 Chụp ảnh / Chọn ảnh
+</button>
+<input type="file" id="proofImageInput" name="proofImage" 
+accept="image/*" capture="environment" style="display: none;" 
+onchange="previewImage(this)" required>
+<div id="imagePreview" class="upload-preview"></div>
+</div>
+<div class="form-group">
+<label>Ghi chú</label>
+<textarea name="notes" rows="3"
+placeholder="Ghi chú về việc giao hàng..."></textarea>
+</div>
+<button type="submit" class="btn-success btn-lg">Hoàn thành giao hàng</button>
+</form>
+</div>
+
+<div class="section"
+th:if="${shipment.status == T(ltweb.entity.ShipmentStatus).IN_TRANSIT}">
+<h3>Cập nhật vị trí</h3>
+<button onclick="updateLocation()" class="btn-primary">Cập nhật vị trí hiện tại</button>
+<div id="location-status" class="mt-2"></div>
+</div>
+</div>
+<script th:inline="javascript">
+const shipmentId = /*[[${shipment.id}]]*/ 0;
+
+function previewImage(input) {
+    const preview = document.getElementById('imagePreview');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            preview.innerHTML = `
+                <img src="${e.target.result}" alt="Preview">
+                <p style="color: green; margin-top: 5px;">✓ Đã chọn ảnh</p>
+            `;
+        }
+        
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+document.getElementById('completeForm').addEventListener('submit', function(e) {
+    const fileInput = document.getElementById('proofImageInput');
+    if (!fileInput.files || !fileInput.files[0]) {
+        e.preventDefault();
+        alert('Vui lòng chụp hoặc chọn ảnh chứng từ giao hàng!');
+        return false;
+    }
+});
+
+function updateLocation() {
+if (navigator.geolocation) {
+navigator.geolocation.getCurrentPosition(function(position) {
+const data = new FormData();
+data.append('latitude', position.coords.latitude);
+data.append('longitude', position.coords.longitude);
+
+fetch('/shipper/location/update', {
+method: 'POST',
+body: data
+})
+.then(response => response.text())
+.then(result => {
+document.getElementById('location-status').innerHTML =
+'<span class="text-success">✓ Đã cập nhật vị trí</span>';
+})
+.catch(error => {
+document.getElementById('location-status').innerHTML =
+'<span class="text-danger">✗ Lỗi cập nhật</span>';
+});
+}, function(error) {
+alert('Không thể lấy vị trí: ' + error.message);
+});
+} else {
+alert('Trình duyệt không hỗ trợ định vị');
+}
+}
+</script>
+</body>
+</html>

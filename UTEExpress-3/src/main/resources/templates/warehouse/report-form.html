@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Tạo báo cáo</title>
+<link rel="stylesheet" th:href="@{/css/warehouse.css}">
+</head>
+<body>
+	<div th:replace="~{fragments/warehouse-header :: header}"></div>
+	<div class="container">
+		<h1>Tạo báo cáo tùy chỉnh</h1>
+		<form th:action="@{/warehouse/reports/generate}" method="post"
+			class="form">
+			<div class="form-group">
+				<label>Loại báo cáo *</label> <select name="reportType" required>
+					<option th:each="type : ${reportTypes}" th:value="${type}"
+						th:text="${type}"></option>
+				</select>
+			</div>
+			<div class="form-row">
+				<div class="form-group">
+					<label>Từ ngày *</label> <input type="datetime-local"
+						name="startDate" required>
+				</div>
+				<div class="form-group">
+					<label>Đến ngày *</label> <input type="datetime-local"
+						name="endDate" required>
+				</div>
+			</div>
+			<div class="form-group">
+				<label>Ghi chú</label>
+				<textarea name="notes" rows="3"></textarea>
+			</div>
+			<div class="form-actions">
+				<button type="submit" class="btn-primary">Tạo báo cáo</button>
+				<a th:href="@{/warehouse/reports}" class="btn-secondary">Hủy</a>
+			</div>
+		</form>
+	</div>
+</body>
+</html>

@@ -1,0 +1,23 @@
+package ltweb.repository;
+
+import ltweb.entity.InboundReceipt;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Repository
+public interface InboundReceiptRepository extends JpaRepository<InboundReceipt, Long> {
+	List<InboundReceipt> findByWarehouseId(Long warehouseId);
+    List<InboundReceipt> findByOrderId(Long orderId);
+    List<InboundReceipt> findByWarehouseIdAndReceivedDateAfter(Long warehouseId, LocalDateTime date);
+    @Query("SELECT ir FROM InboundReceipt ir WHERE ir.warehouse.id = :warehouseId AND ir.receivedDate BETWEEN :startDate AND :endDate")
+    
+    List<InboundReceipt> findByWarehouseIdAndDateRange(
+            @Param("warehouseId") Long warehouseId,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
+}
