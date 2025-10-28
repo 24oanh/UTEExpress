@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard - UTEExpress</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<style>
+/* <CHANGE> Modern color scheme and styling */
+:root {
+	--primary: #001a4d;
+	--primary-light: #0052cc;
+	--accent: #FF6B35;
+	--success: #10b981;
+	--warning: #f59e0b;
+	--danger: #ef4444;
+	--light-bg: #f8fafc;
+	--border-color: #e2e8f0;
+}
+
+.navbar-custom {
+	background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+	box-shadow: 0 4px 12px rgba(0, 26, 77, 0.15);
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 1030;
+	padding: 0.75rem 1.5rem;
+}
+
+.navbar-custom .navbar-brand {
+	font-weight: 700;
+	font-size: 1.3rem;
+	color: white !important;
+	margin-right: 2rem;
+}
+
+.navbar-custom .nav-link {
+	color: rgba(255, 255, 255, 0.85) !important;
+	padding: 0.5rem 1rem !important;
+	margin: 0 0.25rem;
+	border-radius: 6px;
+	transition: all 0.3s ease;
+	font-size: 0.95rem;
+	font-weight: 500;
+}
+
+.navbar-custom .nav-link:hover {
+	background: rgba(255, 255, 255, 0.15);
+	color: white !important;
+}
+
+.navbar-custom .nav-link.active {
+	background: var(--accent);
+	color: white !important;
+}
+
+.navbar-custom .nav-link i {
+	margin-right: 0.5rem;
+}
+
+body {
+	margin-top: 60px;
+	background: var(--light-bg);
+}
+
+.main-content {
+	padding: 2rem 1.5rem;
+}
+
+.welcome-banner {
+	background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+	color: white;
+	border-radius: 12px;
+	padding: 2.5rem;
+	margin-bottom: 2rem;
+	box-shadow: 0 4px 12px rgba(0, 82, 204, 0.2);
+}
+
+.welcome-banner h2 {
+	font-weight: 700;
+	margin-bottom: 0.5rem;
+}
+
+.card {
+	border: none;
+	border-radius: 12px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+	transition: all 0.3s ease;
+	background: white;
+}
+
+.card:hover {
+	box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+	transform: translateY(-2px);
+}
+
+.card-header {
+	border-bottom: 1px solid var(--border-color);
+	background: var(--light-bg);
+	border-radius: 12px 12px 0 0 !important;
+}
+
+.card-header h5 {
+	color: var(--primary);
+	font-weight: 600;
+}
+
+/* <CHANGE> Service cards styling */
+.service-card {
+	text-align: center;
+	padding: 2rem 1.5rem;
+	border-radius: 12px;
+	background: white;
+	border: 1px solid var(--border-color);
+	transition: all 0.3s ease;
+	height: 100%;
+}
+
+.service-card:hover {
+	border-color: var(--accent);
+	box-shadow: 0 8px 16px rgba(255, 107, 53, 0.1);
+	transform: translateY(-4px);
+}
+
+.service-card i {
+	font-size: 2.5rem;
+	margin-bottom: 1rem;
+	color: var(--accent);
+}
+
+.service-card h5 {
+	color: var(--primary);
+	font-weight: 600;
+	margin-bottom: 0.75rem;
+}
+
+.service-card p {
+	color: #64748b;
+	font-size: 0.95rem;
+	line-height: 1.6;
+}
+
+/* <CHANGE> Stats section */
+.stat-box {
+	background: white;
+	border-radius: 12px;
+	padding: 2rem;
+	text-align: center;
+	border: 1px solid var(--border-color);
+	transition: all 0.3s ease;
+}
+
+.stat-box:hover {
+	border-color: var(--accent);
+	box-shadow: 0 8px 16px rgba(255, 107, 53, 0.1);
+}
+
+.stat-number {
+	font-size: 2.5rem;
+	font-weight: 700;
+	color: var(--accent);
+	margin-bottom: 0.5rem;
+}
+
+.stat-label {
+	color: #64748b;
+	font-weight: 500;
+}
+
+/* <CHANGE> Process steps */
+.process-step {
+	position: relative;
+	padding: 2rem;
+	background: white;
+	border-radius: 12px;
+	border: 1px solid var(--border-color);
+	text-align: center;
+}
+
+.process-step .step-number {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 50px;
+	height: 50px;
+	background: var(--accent);
+	color: white;
+	border-radius: 50%;
+	font-weight: 700;
+	font-size: 1.5rem;
+	margin-bottom: 1rem;
+}
+
+.process-step h5 {
+	color: var(--primary);
+	font-weight: 600;
+	margin-bottom: 0.75rem;
+}
+
+.process-step p {
+	color: #64748b;
+	font-size: 0.95rem;
+	margin: 0;
+}
+
+/* <CHANGE> Benefits section */
+.benefit-item {
+	display: flex;
+	align-items: flex-start;
+	margin-bottom: 1.5rem;
+}
+
+.benefit-item i {
+	font-size: 1.5rem;
+	color: var(--accent);
+	margin-right: 1rem;
+	margin-top: 0.25rem;
+	flex-shrink: 0;
+}
+
+.benefit-item h6 {
+	color: var(--primary);
+	font-weight: 600;
+	margin-bottom: 0.25rem;
+}
+
+.benefit-item p {
+	color: #64748b;
+	font-size: 0.95rem;
+	margin: 0;
+}
+
+/* <CHANGE> Guide items */
+.guide-item {
+	display: flex;
+	align-items: center;
+	padding: 1.5rem;
+	background: white;
+	border-radius: 12px;
+	border: 1px solid var(--border-color);
+	margin-bottom: 1rem;
+	transition: all 0.3s ease;
+}
+
+.guide-item:hover {
+	border-color: var(--accent);
+	box-shadow: 0 4px 12px rgba(255, 107, 53, 0.1);
+}
+
+.guide-item i {
+	font-size: 2rem;
+	color: var(--accent);
+	margin-right: 1.5rem;
+	flex-shrink: 0;
+}
+
+.guide-item-content h6 {
+	color: var(--primary);
+	font-weight: 600;
+	margin-bottom: 0.25rem;
+}
+
+.guide-item-content p {
+	color: #64748b;
+	font-size: 0.9rem;
+	margin: 0;
+}
+
+/* <CHANGE> Contact section */
+.contact-info {
+	display: flex;
+	align-items: center;
+	padding: 1.5rem;
+	background: var(--light-bg);
+	border-radius: 12px;
+	margin-bottom: 1rem;
+}
+
+.contact-info i {
+	font-size: 1.5rem;
+	color: var(--accent);
+	margin-right: 1.5rem;
+	flex-shrink: 0;
+}
+
+.contact-info-content h6 {
+	color: var(--primary);
+	font-weight: 600;
+	margin-bottom: 0.25rem;
+}
+
+.contact-info-content p {
+	color: #64748b;
+	font-size: 0.95rem;
+	margin: 0;
+}
+
+@media (max-width: 768px) {
+	.navbar-custom {
+		padding: 0.5rem 1rem;
+	}
+
+	.navbar-custom .navbar-brand {
+		font-size: 1.1rem;
+		margin-right: 1rem;
+	}
+
+	.navbar-custom .nav-link {
+		padding: 0.4rem 0.75rem !important;
+		font-size: 0.9rem;
+	}
+
+	body {
+		margin-top: 70px;
+	}
+
+	.welcome-banner {
+		padding: 1.5rem;
+	}
+
+	.stat-number {
+		font-size: 2rem;
+	}
+}
+</style>
+</head>
+<body>
+	<!-- Navigation Bar -->
+	<nav class="navbar navbar-expand-lg navbar-custom">
+		<div class="container-fluid">
+			<a class="navbar-brand" href="#">
+				<i class="bi bi-box-seam"></i> UTEExpress
+			</a>
+			<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+			<div class="collapse navbar-collapse" id="navbarNav">
+				<ul class="navbar-nav ms-auto">
+					<li class="nav-item">
+						<a class="nav-link active" th:href="@{/customer/dashboard}">
+							<i class="bi bi-speedometer2"></i> Dashboard
+						</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" th:href="@{/customer/orders}">
+							<i class="bi bi-box"></i> Đơn hàng
+						</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" th:href="@{/customer/orders/create}">
+							<i class="bi bi-plus-circle"></i> Tạo đơn
+						</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" th:href="@{/customer/orders/history}">
+							<i class="bi bi-clock-history"></i> Lịch sử
+						</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" th:href="@{/customer/tracking}">
+							<i class="bi bi-geo-alt"></i> Theo dõi
+						</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" th:href="@{/customer/profile}">
+							<i class="bi bi-person"></i> Hồ sơ
+						</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" th:href="@{/customer/addresses}">
+							<i class="bi bi-geo"></i> Địa chỉ
+						</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" th:href="@{/customer/notifications}">
+							<i class="bi bi-bell"></i> Thông báo
+						</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" th:href="@{/customer/chat}">
+							<i class="bi bi-chat-dots"></i> Hỗ trợ
+						</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" th:href="@{/logout}">
+							<i class="bi bi-box-arrow-right"></i> Đăng xuất
+						</a>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</nav>
+
+	<!-- Main Content -->
+	<div class="main-content">
+		<div class="container-fluid">
+			<!-- Welcome Banner -->
+			<div class="welcome-banner">
+				<h2>Chào mừng bạn đến với UTEExpress</h2>
+				<p class="mb-0">Hệ thống quản lý vận chuyển hàng đầu Việt Nam - Nhanh chóng, An toàn, Đáng tin cậy</p>
+			</div>
+
+			<!-- Statistics Section -->
+			<div class="row mb-4">
+				<div class="col-md-3 col-sm-6 mb-3">
+					<div class="stat-box">
+						<div class="stat-number">500+</div>
+						<div class="stat-label">Bưu cục trên toàn quốc</div>
+					</div>
+				</div>
+				<div class="col-md-3 col-sm-6 mb-3">
+					<div class="stat-box">
+						<div class="stat-number">1M+</div>
+						<div class="stat-label">Đơn hàng giao thành công</div>
+					</div>
+				</div>
+				<div class="col-md-3 col-sm-6 mb-3">
+					<div class="stat-box">
+						<div class="stat-number">24/7</div>
+						<div class="stat-label">Hỗ trợ khách hàng</div>
+					</div>
+				</div>
+				<div class="col-md-3 col-sm-6 mb-3">
+					<div class="stat-box">
+						<div class="stat-number">99.8%</div>
+						<div class="stat-label">Tỷ lệ hài lòng</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Services Section -->
+			<div class="row mb-4">
+				<div class="col-md-12">
+					<div class="card">
+						<div class="card-header bg-white">
+							<h5 class="mb-0">
+								<i class="bi bi-briefcase"></i> Dịch vụ chính của chúng tôi
+							</h5>
+						</div>
+						<div class="card-body">
+							<div class="row">
+								<div class="col-md-4 mb-3">
+									<div class="service-card">
+										<i class="bi bi-lightning-charge-fill"></i>
+										<h5>Giao hàng nhanh</h5>
+										<p>Giao hàng trong 24-48 giờ tại các thành phố lớn. Đảm bảo hàng đến đúng hẹn.</p>
+									</div>
+								</div>
+								<div class="col-md-4 mb-3">
+									<div class="service-card">
+										<i class="bi bi-shield-check"></i>
+										<h5>Bảo hiểm hàng hóa</h5>
+										<p>Bảo hiểm toàn diện cho tất cả đơn hàng. Bồi thường nhanh chóng nếu có sự cố.</p>
+									</div>
+								</div>
+								<div class="col-md-4 mb-3">
+									<div class="service-card">
+										<i class="bi bi-geo-alt-fill"></i>
+										<h5>Theo dõi realtime</h5>
+										<p>Cập nhật vị trí đơn hàng theo thời gian thực. Biết chính xác hàng ở đâu mọi lúc.</p>
+									</div>
+								</div>
+								<div class="col-md-4 mb-3">
+									<div class="service-card">
+										<i class="bi bi-box-seam"></i>
+										<h5>Đóng gói chuyên nghiệp</h5>
+										<p>Đóng gói an toàn theo tiêu chuẩn quốc tế. Bảo vệ hàng hóa tối đa trong quá trình vận chuyển.</p>
+									</div>
+								</div>
+								<div class="col-md-4 mb-3">
+									<div class="service-card">
+										<i class="bi bi-credit-card"></i>
+										<h5>Thanh toán linh hoạt</h5>
+										<p>Nhiều hình thức thanh toán: tiền mặt, chuyển khoản, ví điện tử, trả sau.</p>
+									</div>
+								</div>
+								<div class="col-md-4 mb-3">
+									<div class="service-card">
+										<i class="bi bi-headset"></i>
+										<h5>Hỗ trợ 24/7</h5>
+										<p>Đội ngũ chuyên viên sẵn sàng giải đáp mọi thắc mắc qua điện thoại, email, chat.</p>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Process Section -->
+			<div class="row mb-4">
+				<div class="col-md-12">
+					<div class="card">
+						<div class="card-header bg-white">
+							<h5 class="mb-0">
+								<i class="bi bi-diagram-3"></i> Quy trình vận chuyển
+							</h5>
+						</div>
+						<div class="card-body">
+							<div class="row">
+								<div class="col-md-3 mb-3">
+									<div class="process-step">
+										<div class="step-number">1</div>
+										<h5>Tạo đơn hàng</h5>
+										<p>Điền thông tin người gửi, người nhận và chi tiết hàng hóa</p>
+									</div>
+								</div>
+								<div class="col-md-3 mb-3">
+									<div class="process-step">
+										<div class="step-number">2</div>
+										<h5>Xác nhận đơn</h5>
+										<p>Hệ thống xác nhận và sắp xếp lộ trình giao hàng tối ưu</p>
+									</div>
+								</div>
+								<div class="col-md-3 mb-3">
+									<div class="process-step">
+										<div class="step-number">3</div>
+										<h5>Vận chuyển</h5>
+										<p>Hàng được vận chuyển an toàn đến điểm giao cuối cùng</p>
+									</div>
+								</div>
+								<div class="col-md-3 mb-3">
+									<div class="process-step">
+										<div class="step-number">4</div>
+										<h5>Giao nhận</h5>
+										<p>Khách hàng nhận hàng và xác nhận hoàn tất đơn vận chuyển</p>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Benefits Section -->
+			<div class="row mb-4">
+				<div class="col-md-6">
+					<div class="card">
+						<div class="card-header bg-white">
+							<h5 class="mb-0">
+								<i class="bi bi-star-fill"></i> Lợi ích khi sử dụng UTEExpress
+							</h5>
+						</div>
+						<div class="card-body">
+							<div class="benefit-item">
+								<i class="bi bi-check-circle-fill"></i>
+								<div>
+									<h6>Giá cước cạnh tranh</h6>
+									<p>Giá cước thấp nhất thị trường với chất lượng dịch vụ tốt nhất</p>
+								</div>
+							</div>
+							<div class="benefit-item">
+								<i class="bi bi-check-circle-fill"></i>
+								<div>
+									<h6>Mạng lưới rộng</h6>
+									<p>Phủ sóng toàn quốc với 500+ bưu cục và điểm giao dịch</p>
+								</div>
+							</div>
+							<div class="benefit-item">
+								<i class="bi bi-check-circle-fill"></i>
+								<div>
+									<h6>Công nghệ hiện đại</h6>
+									<p>Hệ thống quản lý tự động, theo dõi GPS, ứng dụng di động tiện lợi</p>
+								</div>
+							</div>
+							<div class="benefit-item">
+								<i class="bi bi-check-circle-fill"></i>
+								<div>
+									<h6>Đội ngũ chuyên nghiệp</h6>
+									<p>Nhân viên được đào tạo chuyên sâu, tận tâm phục vụ khách hàng</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Guide Section -->
+				<div class="col-md-6">
+					<div class="card">
+						<div class="card-header bg-white">
+							<h5 class="mb-0">
+								<i class="bi bi-book"></i> Hướng dẫn sử dụng nhanh
+							</h5>
+						</div>
+						<div class="card-body">
+							<div class="guide-item">
+								<i class="bi bi-1-circle-fill"></i>
+								<div class="guide-item-content">
+									<h6>Đăng ký tài khoản</h6>
+									<p>Tạo tài khoản miễn phí với email hoặc số điện thoại</p>
+								</div>
+							</div>
+							<div class="guide-item">
+								<i class="bi bi-2-circle-fill"></i>
+								<div class="guide-item-content">
+									<h6>Tạo đơn hàng</h6>
+									<p>Nhập thông tin gửi/nhận và chi tiết hàng hóa</p>
+								</div>
+							</div>
+							<div class="guide-item">
+								<i class="bi bi-3-circle-fill"></i>
+								<div class="guide-item-content">
+									<h6>Thanh toán</h6>
+									<p>Chọn phương thức thanh toán phù hợp</p>
+								</div>
+							</div>
+							<div class="guide-item">
+								<i class="bi bi-4-circle-fill"></i>
+								<div class="guide-item-content">
+									<h6>Theo dõi đơn</h6>
+									<p>Kiểm tra trạng thái đơn hàng realtime trên ứng dụng</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Contact Section -->
+			<div class="row mb-4">
+				<div class="col-md-12">
+					<div class="card">
+						<div class="card-header bg-white">
+							<h5 class="mb-0">
+								<i class="bi bi-telephone"></i> Liên hệ với chúng tôi
+							</h5>
+						</div>
+						<div class="card-body">
+							<div class="row">
+								<div class="col-md-6">
+									<div class="contact-info">
+										<i class="bi bi-telephone-fill"></i>
+										<div class="contact-info-content">
+											<h6>Hotline</h6>
+											<p>1900 1234 (Miễn phí, 24/7)</p>
+										</div>
+									</div>
+									<div class="contact-info">
+										<i class="bi bi-envelope-fill"></i>
+										<div class="contact-info-content">
+											<h6>Email</h6>
+											<p>support@uteexpress.com.vn</p>
+										</div>
+									</div>
+								</div>
+								<div class="col-md-6">
+									<div class="contact-info">
+										<i class="bi bi-geo-alt-fill"></i>
+										<div class="contact-info-content">
+											<h6>Trụ sở chính</h6>
+											<p>123 Đường ABC, Quận 1, TP.HCM</p>
+										</div>
+									</div>
+									<div class="contact-info">
+										<i class="bi bi-clock-fill"></i>
+										<div class="contact-info-content">
+											<h6>Giờ làm việc</h6>
+											<p>Thứ 2 - Chủ nhật: 8:00 - 22:00</p>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

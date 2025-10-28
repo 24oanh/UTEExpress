@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Lịch sử giao hàng</title>
+<link rel="stylesheet" th:href="@{/css/shipper.css}">
+</head>
+<body>
+	<div th:replace="~{fragments/shipper-header :: header}"></div>
+	<div class="container">
+		<h1>Lịch sử giao hàng</h1>
+		<div class="filter-tabs">
+			<button class="tab active" onclick="filterShipments('ALL')">Tất
+				cả</button>
+			<button class="tab" onclick="filterShipments('PENDING')">Chờ
+				lấy</button>
+			<button class="tab" onclick="filterShipments('IN_TRANSIT')">Đang
+				giao</button>
+			<button class="tab" onclick="filterShipments('DELIVERED')">Đã
+				giao</button>
+			<button class="tab" onclick="filterShipments('FAILED')">Thất
+				bại</button>
+		</div>
+
+		<table id="shipmentTable">
+			<thead>
+				<tr>
+					<th>Mã giao hàng</th>
+					<th>Mã đơn</th>
+					<th>Người nhận</th>
+					<th>Địa chỉ</th>
+					<th>Trạng thái</th>
+					<th>Ngày tạo</th>
+					<th>Thao tác</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="shipment : ${shipments}"
+					th:attr="data-status=${shipment.status}">
+					<td th:text="${shipment.shipmentCode}"></td>
+					<td th:text="${shipment.order.orderCode}"></td>
+					<td th:text="${shipment.order.recipientName}"></td>
+					<td th:text="${shipment.order.recipientAddress}"></td>
+					<td><span th:class="'badge badge-' + ${shipment.status}"
+						th:text="${shipment.status}"></span></td>
+					<td
+						th:text="${#temporals.format(shipment.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+					<td><a th:href="@{/shipper/shipments/{id}(id=${shipment.id})}"
+						class="btn-sm">Chi tiết</a></td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<script>
+        function filterShipments(status) {
+            const rows = document.querySelectorAll('#shipmentTable tbody tr');
+            const tabs = document.querySelectorAll('.tab');
+            
+            tabs.forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            rows.forEach(row => {
+                if (status === 'ALL' || row.dataset.status === status) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

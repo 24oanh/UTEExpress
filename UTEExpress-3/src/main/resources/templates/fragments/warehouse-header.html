@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head></head>
+
+<body>
+	<header th:fragment="header">
+		<nav class="navbar">
+			<div class="nav-brand">
+				<h2>UTE Express - Kho</h2>
+			</div>
+			<ul class="nav-menu">
+				<li><a th:href="@{/warehouse/dashboard}">Dashboard</a></li>
+				<li><a th:href="@{/warehouse/orders}">Đơn hàng</a></li>
+				<li><a th:href="@{/warehouse/inbound}">Nhập kho</a></li>
+				<li><a th:href="@{/warehouse/outbound}">Xuất kho</a></li>
+				<li><a th:href="@{/warehouse/inventory/report}">Báo cáo tồn kho</a></li>
+				<li><a th:href="@{/warehouse/notifications}">Thông báo <span th:if="${unreadNotifications > 0}"
+							class="badge-notif" th:text="${unreadNotifications}"></span></a></li>
+				<li><a th:href="@{/warehouse/info}">Thông tin kho</a></li>
+			</ul>
+			<div class="nav-user">
+				<span th:text="${session.currentUser.fullName}"></span> <a th:href="@{/logout}" class="btn-logout">Đăng
+					xuất</a>
+			</div>
+		</nav>
+	</header>
+</body>
+
+</html>
